@@ -1,4 +1,21 @@
-## Valheim World File Analysis (seed.db/seed.fwl)
+## Valheim Seed-to-Map Generator (and World File Analyzer)
+
+### Project intent
+This project aims to take a Valheim world seed and deterministically generate a full, high‑fidelity world map suitable for web rendering (terrain, biomes, ocean/shorelines, points of interest, dungeons, trader, spawn, etc.), similar in spirit to sites like `valheim-map.world`. In parallel, it includes a Node.js analyzer for real world files (`.db`/`.fwl`) to validate generator outputs against actual saves and to bootstrap assets/materials.
+
+High-level outcome:
+- Seed in ➜ data layers out (heightmap, biome raster, POIs, regions) ➜ tile pyramid and overlays ➜ browser renderer.
+
+### Roadmap (short)
+- Generator core: Recreate worldgen primitives (noise, biome masks, altitude/shore logic) for a given seed.
+- Layers: Produce height, biome, water, Mistlands haze, structures/POIs as discrete layers with stable schemas.
+- Export: Tile/asset pipeline (e.g., XYZ/quadkey tiles, simple JSON manifests) for web clients.
+- Renderer: Minimal web app to layer tiles/overlays, with seed entry and quick navigation.
+- Validation: Cross-check generator layers against analyzer outputs from real saves for known seeds.
+
+---
+
+### Current analyzer (status quo)
 
 This repo contains a Node.js analyzer to inspect and extract structured data from Valheim dedicated server world files (`.db` and `.fwl`). It produces logs, extracted artifacts, clustering views, and terrain height grids suitable for use in a web app (terrain/biome/region overlays).
 
