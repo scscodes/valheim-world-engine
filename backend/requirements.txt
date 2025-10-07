@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.24
+pydantic>=2.6
+redis>=5.0
+rq>=1.16
+SQLAlchemy>=2.0
+numpy>=2.0
+Pillow>=10.0

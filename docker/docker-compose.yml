@@ -1,0 +1,33 @@
+services:
+  redis:
+    image: redis:7-alpine
+  backend:
+    build:
+      context: ../backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - ../.env
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - DATA_DIR=${DATA_DIR:-/app/data}
+    volumes:
+      - ../backend:/app
+      - ../data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+  worker:
+    build:
+      context: ../backend
+    command: python -m app.worker
+    env_file:
+      - ../.env
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - DATA_DIR=${DATA_DIR:-/app/data}
+    volumes:
+      - ../backend:/app
+      - ../data:/app/data
+    depends_on:
+      - redis
