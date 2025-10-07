@@ -13,6 +13,7 @@ Typically done via `docker compose` using the`lloesche/valheim-server` image.
 
 ## Unofficial Community Resources
 - [Map Tool: valheim-map.world](https://valheim-map.world/)
+- [Github: MakeFwl](https://github.com/CrystalFerrai/MakeFwl#) Seed metadata extractor
 
 ## Seed (hnLycKKCMI) Images (if available)
 These files are direct exports from `valheim-map.world` of our primary seed: hnLycKKCMI
