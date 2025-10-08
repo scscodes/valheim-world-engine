@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "dgSpecHash": "CbnYT7HgzmVi4A9bCP4ntkI4/7SJ/eolEdo0/BiE92ykNzZWwmKgsZmT7bK6sIhTkV1Hz/QHv7OBgkB8QDoTmw==",
+  "success": false,
+  "projectFilePath": "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj",
+  "expectedPackageFiles": [
+    "/home/steve/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "/home/steve/.nuget/packages/microsoft.netframework.referenceassemblies.net48/1.0.3/microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package BepInEx.Core. No packages exist with this id in source(s): nuget.org",
+      "libraryId": "BepInEx.Core",
+      "targetGraphs": [
+        ".NETFramework,Version=v4.8"
+      ]
+    },
+    {
+      "code": "NU1101",
+      "level": "Error",
+      "message": "Unable to find package BepInEx.Harmony. No packages exist with this id in source(s): nuget.org",
+      "libraryId": "BepInEx.Harmony",
+      "targetGraphs": [
+        ".NETFramework,Version=v4.8"
+      ]
+    }
+  ]
+}

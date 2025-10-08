@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj": {}
+  },
+  "projects": {
+    "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj",
+        "projectName": "VWE_AutoSave",
+        "projectPath": "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj",
+        "packagesPath": "/home/steve/.nuget/packages/",
+        "outputPath": "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/steve/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net48"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "targetAlias": "net48",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net48": {
+          "targetAlias": "net48",
+          "dependencies": {
+            "BepInEx.Core": {
+              "target": "Package",
+              "version": "[5.4.22, )"
+            },
+            "BepInEx.Harmony": {
+              "target": "Package",
+              "version": "[2.2.2, )"
+            },
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.120/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+# Docker Compose override for BepInEx-enabled Valheim server
+version: '3.8'
+
+services:
+  valheim-server:
+    image: vwe/valheim-server-bepinex:latest
+    build:
+      context: ../../
+      dockerfile: bepinex/docker/Dockerfile
+    environment:
+      # BepInEx Configuration
+      - BEPINEX_ENABLED=true
+      - BEPINEX_LOG_LEVEL=Info
+      - BEPINEX_LOG_CONSOLE=true
+      - BEPINEX_LOG_FILE=true
+      
+      # VWE Plugin Configuration
+      - VWE_AUTOSAVE_ENABLED=true
+      - VWE_AUTOSAVE_DELAY=2
+      - VWE_DATAEXPORT_ENABLED=true
+      - VWE_DATAEXPORT_FORMAT=both
+      - VWE_DATAEXPORT_DIR=./world_data
+      
+      # Valheim Server Configuration (inherited from main compose)
+      - SERVER_NAME=${SERVER_NAME:-Valheim World Engine}
+      - WORLD_NAME=${WORLD_NAME:-hnLycKKCMI}
+      - SERVER_PASS=${SERVER_PASS:-valpass1}
+      - SERVER_PORT=${SERVER_PORT:-2456}
+      - VALHEIM_PLUS=${VALHEIM_PLUS:-false}
+      - VALHEIM_PLUS_LOGS=${VALHEIM_PLUS_LOGS:-false}
+      - BEPINEX_UPDATE=${BEPINEX_UPDATE:-false}
+      - BEPINEX_UPDATE_RELEASEURL=${BEPINEX_UPDATE_RELEASEURL:-}
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      # Mount config directory for Valheim server
+      - ${HOST_DATA_DIR}/seeds/${WORLD_NAME:-hnLycKKCMI}:/config
+      # Mount plugins directory for BepInEx
+      - ${PLUGINS_HOST_DIR}:/valheim/BepInEx/plugins
+      # Mount world data export directory
+      - ${HOST_DATA_DIR}/seeds/${WORLD_NAME:-hnLycKKCMI}/exported:/valheim/world_data
+    ports:
+      - "${SERVER_PORT:-2456}:2456/udp"
+      - "8080:8080"  # BepInEx logs port
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-f", "/valheim/BepInEx/plugins/VWE_AutoSave.dll"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.valheimworldengine.service=valheim-server-bepinex"
+      - "com.valheimworldengine.version=1.0.0"
