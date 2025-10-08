@@ -60,8 +60,8 @@ echo "Verifying setup..."
 required_files=(
     "plugins/BepInEx.dll"
     "plugins/BepInEx.Harmony.dll"
-    "plugins/BepInEx.MonoMod.dll"
-    "plugins/Assembly-CSharp.dll"
+    "plugins/MonoMod.RuntimeDetour.dll"
+    "plugins/assembly_valheim.dll"
     "plugins/UnityEngine.dll"
 )
 

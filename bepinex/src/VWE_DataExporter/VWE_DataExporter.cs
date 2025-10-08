@@ -11,32 +11,35 @@ using VWE_DataExporter.DataExporters;
 namespace VWE_DataExporter
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    [BepInProcess("valheim_server.exe")]
     public class VWE_DataExporterPlugin : BaseUnityPlugin
     {
         public const string PluginGUID = "com.valheimworldengine.dataexporter";
         public const string PluginName = "VWE DataExporter";
         public const string PluginVersion = "1.0.0";
 
-        private static ConfigEntry<bool> _enabled;
-        private static ConfigEntry<string> _exportFormat;
-        private static ConfigEntry<float> _exportInterval;
-        private static ConfigEntry<string> _exportDir;
-        private static ConfigEntry<bool> _logExports;
-        private static ConfigEntry<bool> _logDebug;
+        private static ConfigEntry<bool>? _enabled;
+        private static ConfigEntry<string>? _exportFormat;
+        private static ConfigEntry<float>? _exportInterval;
+        private static ConfigEntry<string>? _exportDir;
+        private static ConfigEntry<bool>? _logExports;
+        private static ConfigEntry<bool>? _logDebug;
 
-        private static ConfigEntry<bool> _biomeExportEnabled;
-        private static ConfigEntry<int> _biomeResolution;
-        private static ConfigEntry<bool> _heightmapExportEnabled;
-        private static ConfigEntry<int> _heightmapResolution;
-        private static ConfigEntry<bool> _structureExportEnabled;
+        private static ConfigEntry<bool>? _biomeExportEnabled;
+        private static ConfigEntry<int>? _biomeResolution;
+        private static ConfigEntry<bool>? _heightmapExportEnabled;
+        private static ConfigEntry<int>? _heightmapResolution;
+        private static ConfigEntry<bool>? _structureExportEnabled;
+        private static ManualLogSource? _logger;
 
         private static bool _worldGenerationComplete = false;
         private static bool _exportTriggered = false;
-        private static Coroutine _exportCoroutine;
+        private static Coroutine? _exportCoroutine;
 
         private void Awake()
         {
+            // Store logger for static access
+            _logger = Logger;
+            
             // Main configuration
             _enabled = Config.Bind("DataExporter", "enabled", true, "Enable/disable data export");
             _exportFormat = Config.Bind("DataExporter", "export_format", "both", "Export format: json, png, both");
@@ -138,77 +141,49 @@ namespace VWE_DataExporter
 
         private IEnumerator ExportWorldData()
         {
-            var exportPath = Path.Combine(Application.dataPath, "..", _exportDir.Value);
+            var exportPath = Path.Combine(Application.dataPath, "..", _exportDir?.Value ?? "./world_data");
             exportPath = Path.GetFullPath(exportPath);
 
-            try
+            // Export biome data
+            if (_biomeExportEnabled?.Value == true)
             {
-                // Export biome data
-                if (_biomeExportEnabled.Value)
-                {
-                    yield return StartCoroutine(ExportBiomeData(exportPath));
-                }
-
-                // Export heightmap data
-                if (_heightmapExportEnabled.Value)
-                {
-                    yield return StartCoroutine(ExportHeightmapData(exportPath));
-                }
-
-                // Export structure data
-                if (_structureExportEnabled.Value)
-                {
-                    yield return StartCoroutine(ExportStructureData(exportPath));
-                }
-
-                if (_logExports.Value)
-                {
-                    Logger.LogInfo("VWE DataExporter: Data export completed successfully");
-                }
+                yield return ExportBiomeData(exportPath);
             }
-            catch (Exception ex)
+
+            // Export heightmap data
+            if (_heightmapExportEnabled?.Value == true)
             {
-                Logger.LogError($"VWE DataExporter: Export failed: {ex.Message}");
+                yield return ExportHeightmapData(exportPath);
+            }
+
+            // Export structure data
+            if (_structureExportEnabled?.Value == true)
+            {
+                yield return ExportStructureData(exportPath);
+            }
+
+            if (_logExports?.Value == true)
+            {
+                Logger.LogInfo("VWE DataExporter: Data export completed successfully");
             }
         }
 
         private IEnumerator ExportBiomeData(string exportPath)
         {
-            try
-            {
-                var biomeExporter = new BiomeExporter(Logger, _biomeResolution.Value);
-                yield return StartCoroutine(biomeExporter.ExportBiomes(exportPath, _exportFormat.Value));
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"VWE DataExporter: Biome export failed: {ex.Message}");
-            }
+            var biomeExporter = new BiomeExporter(Logger, _biomeResolution?.Value ?? 2048);
+            yield return biomeExporter.ExportBiomes(exportPath, _exportFormat?.Value ?? "both");
         }
 
         private IEnumerator ExportHeightmapData(string exportPath)
         {
-            try
-            {
-                var heightmapExporter = new HeightmapExporter(Logger, _heightmapResolution.Value);
-                yield return StartCoroutine(heightmapExporter.ExportHeightmap(exportPath, _exportFormat.Value));
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"VWE DataExporter: Heightmap export failed: {ex.Message}");
-            }
+            var heightmapExporter = new HeightmapExporter(Logger, _heightmapResolution?.Value ?? 2048);
+            yield return heightmapExporter.ExportHeightmap(exportPath, _exportFormat?.Value ?? "both");
         }
 
         private IEnumerator ExportStructureData(string exportPath)
         {
-            try
-            {
-                var structureExporter = new StructureExporter(Logger);
-                yield return StartCoroutine(structureExporter.ExportStructures(exportPath, _exportFormat.Value));
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"VWE DataExporter: Structure export failed: {ex.Message}");
-            }
+            var structureExporter = new StructureExporter(Logger);
+            yield return structureExporter.ExportStructures(exportPath, _exportFormat?.Value ?? "both");
         }
 
         // Harmony patch to detect world generation completion
@@ -217,45 +192,22 @@ namespace VWE_DataExporter
         {
             public static void Postfix(ZoneSystem __instance)
             {
-                if (!_enabled.Value) return;
+                if (_enabled?.Value != true) return;
 
-                if (_logDebug.Value)
+                // ★★★ PROMINENT DEBUG LOGGING ★★★
+                _logger?.LogInfo("★★★ VWE DataExporter: HOOK EXECUTED - ZoneSystem.Start detected ★★★");
+
+                if (_logDebug?.Value == true)
                 {
-                    Logger.LogInfo("VWE DataExporter: ZoneSystem.Start detected");
+                    _logger?.LogInfo("VWE DataExporter: ZoneSystem.Start detected");
                 }
 
                 // Mark world generation as complete
                 _worldGenerationComplete = true;
-                
-                if (_logExports.Value)
-                {
-                    Logger.LogInfo("VWE DataExporter: World generation complete, data export will be triggered");
-                }
-            }
-        }
 
-        // Harmony patch to detect world generation completion via other events
-        [HarmonyPatch(typeof(ZoneSystem), "Generate")]
-        public static class ZoneSystemGeneratePatch
-        {
-            public static void Postfix(ZoneSystem __instance)
-            {
-                if (!_enabled.Value) return;
-
-                if (_logDebug.Value)
+                if (_logExports?.Value == true)
                 {
-                    Logger.LogInfo("VWE DataExporter: ZoneSystem.Generate completed");
-                }
-
-                // Alternative detection method
-                if (!_worldGenerationComplete)
-                {
-                    _worldGenerationComplete = true;
-                    
-                    if (_logExports.Value)
-                    {
-                        Logger.LogInfo("VWE DataExporter: World generation complete (via Generate), data export will be triggered");
-                    }
+                    _logger?.LogInfo("VWE DataExporter: World generation complete, data export will be triggered");
                 }
             }
         }
@@ -266,11 +218,11 @@ namespace VWE_DataExporter
         {
             public static void Postfix(ZNet __instance, ZNetPeer peer)
             {
-                if (!_enabled.Value) return;
+                if (_enabled?.Value != true) return;
 
-                if (_logDebug.Value)
+                if (_logDebug?.Value == true)
                 {
-                    Logger.LogInfo("VWE DataExporter: New connection detected, checking world status");
+                    _logger?.LogInfo("VWE DataExporter: New connection detected, checking world status");
                 }
 
                 // Check if world is ready for data export
@@ -290,9 +242,9 @@ namespace VWE_DataExporter
             {
                 _worldGenerationComplete = true;
                 
-                if (_logExports.Value)
+                if (_logExports?.Value == true)
                 {
-                    Logger.LogInfo("VWE DataExporter: World generation assumed complete (timeout), data export will be triggered");
+                    _logger?.LogInfo("VWE DataExporter: World generation assumed complete (timeout), data export will be triggered");
                 }
             }
         }

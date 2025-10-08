@@ -7,13 +7,35 @@
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-
   <ItemGroup>
-    <PackageReference Include="BepInEx.Core" Version="5.4.22" />
-    <PackageReference Include="BepInEx.Harmony" Version="2.2.2" />
-    <PackageReference Include="UnityEngine" Version="2019.4.40" />
+    <!-- Reference local DLLs from plugins directory -->
+    <Reference Include="BepInEx">
+      <HintPath>..\..\plugins\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Harmony">
+      <HintPath>..\..\plugins\BepInEx.Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony20">
+      <HintPath>..\..\plugins\0Harmony20.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_valheim">
+      <HintPath>..\..\plugins\assembly_valheim.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\plugins\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\plugins\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
 </Project>

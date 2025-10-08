@@ -1,6 +1,10 @@
 # BepInEx Integration Example
 
-This document shows how to integrate the BepInEx solution into the main Valheim World Engine project.
+**⚠️ NOTE:** This integration is **on hold** until BepInEx approach is fully validated.
+
+This document outlines how the BepInEx solution **could** be integrated into the main Valheim World Engine project once it proves superior to the current graceful shutdown approach.
+
+**Current Status:** BepInEx approach is isolated for testing. See `VALIDATION_GUIDE.md`.
 
 ## 1. Update world_generator.py
 
@@ -46,32 +50,13 @@ def build_worldgen_plan(self, seed: str) -> Dict[str, Any]:
     # ... rest of existing code ...
 ```
 
-## 2. Update docker-compose.yml
+## 2. Use dedicated BepInEx compose file
 
-Add BepInEx service to the main compose file:
+Use the dedicated BepInEx compose file:
 
-```yaml
-# In docker/docker-compose.yml
-
-services:
-  valheim-server-bepinex:
-    image: vwe/valheim-server-bepinex:latest
-    build:
-      context: ../
-      dockerfile: bepinex/docker/Dockerfile
-    environment:
-      - BEPINEX_ENABLED=true
-      - VWE_AUTOSAVE_ENABLED=true
-      - VWE_DATAEXPORT_ENABLED=true
-      # ... other environment variables
-    volumes:
-      - ${HOST_DATA_DIR}/seeds/${WORLD_NAME}:/config
-      - ${PLUGINS_HOST_DIR}:/valheim/BepInEx/plugins
-      - ${HOST_DATA_DIR}/seeds/${WORLD_NAME}/exported:/valheim/world_data
-    ports:
-      - "${SERVER_PORT}:2456/udp"
-      - "8080:8080"
-    restart: unless-stopped
+```bash
+# Run from repo root
+docker compose -f docker/bepinex/docker-compose.bepinex.yml --profile bepinex up -d
 ```
 
 ## 3. Update .env
@@ -189,7 +174,7 @@ With BepInEx integration:
 1. **Build plugins**: `cd bepinex && make build`
 2. **Build Docker image**: `cd bepinex && make docker-build`
 3. **Update configuration**: Set `BEPINEX_ENABLED=true` in `.env`
-4. **Deploy**: `docker-compose up -d`
+4. **Deploy**: `docker compose -f docker/bepinex/docker-compose.bepinex.yml --profile bepinex up -d`
 
 ## 8. Monitoring
 

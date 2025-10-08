@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = VWE_DataExporter
+build_property.ProjectDir = /home/steve/projects/valhem-world-engine/bepinex/src/VWE_DataExporter/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 

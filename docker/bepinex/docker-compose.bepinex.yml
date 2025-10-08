@@ -1,0 +1,60 @@
+services:
+  valheim-bepinex:
+    build:
+      context: ../../
+      dockerfile: docker/bepinex/Dockerfile
+    image: vwe/valheim-bepinex:latest
+    container_name: vwe-valheim-bepinex
+    profiles: ["bepinex"]
+    user: "0:0"  # Start as root, entrypoint will switch to PUID/PGID
+    env_file:
+      - ../../.env
+    environment:
+      # VWE Plugin Configuration (read by custom plugins)
+      - VWE_AUTOSAVE_ENABLED=true
+      - VWE_AUTOSAVE_DELAY=2
+      - VWE_DATAEXPORT_ENABLED=true
+      - VWE_DATAEXPORT_FORMAT=both
+      - VWE_DATAEXPORT_DIR=/config/world_data
+
+      # Valheim Server Configuration
+      - SERVER_NAME=${SERVER_NAME:-Valheim World Engine BepInEx}
+      - WORLD_NAME=${WORLD_NAME:-hkLycKKCMI}
+      - SERVER_PASS=${SERVER_PASS:-secret12345}
+      - SERVER_PUBLIC=0
+      - SERVER_PORT=${SERVER_PORT:-2456}
+      - TZ=${TZ:-UTC}
+
+      # File ownership (custom image uses PUID/PGID)
+      - PUID=${HOST_UID:-1000}
+      - PGID=${HOST_GID:-1000}
+    volumes:
+      # Mount seed-specific config directory (server creates worlds_local/ inside)
+      - ${HOST_DATA_DIR:-/home/steve/projects/valhem-world-engine/data}/seeds/${WORLD_NAME:-hkLycKKCMI}:/config
+
+      # Mount VWE custom plugins for development (image has copies, but this overrides)
+      - ${PLUGINS_HOST_DIR:-/home/steve/projects/valhem-world-engine/bepinex/plugins}/VWE_AutoSave.dll:/config/bepinex/plugins/VWE_AutoSave.dll:ro
+      - ${PLUGINS_HOST_DIR:-/home/steve/projects/valhem-world-engine/bepinex/plugins}/VWE_DataExporter.dll:/config/bepinex/plugins/VWE_DataExporter.dll:ro
+
+      # Mount BepInEx config files
+      - ${REPO_ROOT:-/home/steve/projects/valhem-world-engine}/bepinex/config/BepInEx.cfg:/config/bepinex/BepInEx.cfg:ro
+      - ${REPO_ROOT:-/home/steve/projects/valhem-world-engine}/bepinex/config/VWE_DataExporter.cfg:/config/bepinex/VWE_DataExporter.cfg:ro
+    ports:
+      - "${SERVER_PORT:-2456}:2456/udp"
+      - "2457:2457/udp"
+      - "2458:2458/udp"
+    restart: "no"
+    stop_grace_period: 120s
+    healthcheck:
+      test: ["CMD", "test", "-f", "/opt/valheim/BepInEx/plugins/VWE_AutoSave.dll"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+    labels:
+      - "com.valheimworldengine.service=valheim-bepinex"
+      - "com.valheimworldengine.approach=bepinex-programmatic-custom"
+      - "com.valheimworldengine.version=2.0.0"
+      - "com.valheimworldengine.glibc=2.36"
+
+

@@ -1,62 +1,82 @@
 # BepInEx Integration for Valheim World Engine
 
-This directory contains BepInEx plugins and Docker configuration for optimized Valheim world generation and data export.
+This directory contains custom BepInEx plugins for programmatic Valheim world generation and data export. This approach is **isolated** from the working `backend/` graceful shutdown approach to allow independent development and testing.
+
+## Design Philosophy
+
+**Two Isolated Approaches:**
+1. **`backend/` approach**: lloesche graceful shutdown (2-3 min) - production-ready
+2. **`bepinex/` approach**: Custom plugins with programmatic hooks (~17s achieved) - functional, data export in progress
+
+This isolation allows side-by-side comparison without affecting the working backend.
+
+## Current Status
+
+✅ **Functional:**
+- World generation and programmatic save working (~17 seconds total)
+- Harmony patches execute successfully
+- World files (.db, .fwl) created correctly
+
+⏳ **In Progress:**
+- Data export (biomes/heightmaps) - coroutines start but not completing yet
+
+## How It Works
+
+**Instead of** waiting for server lifecycle and graceful shutdown hooks, this approach:
+1. Hooks into `ZoneSystem.Start` event (world generation complete)
+2. Immediately triggers `ZNet.instance.Save()` programmatically
+3. Exports biomes/heightmap data **during** generation (in progress)
+4. **Achieved: ~17 seconds** (10x faster than backend approach)
 
 ## Prerequisites
 
 ### Required Software
-- **.NET Framework 4.8 SDK** (not .NET Core/5+)
-- **Docker** (for extracting Valheim assemblies)
-- **Git** (for cloning repositories)
+- **.NET Framework 4.8 SDK** (for building plugins)
+- **Docker** (for running isolated test environment)
+- **Valheim assemblies** (for compiling plugins)
 
-### Required Assembly Files
-**⚠️ Manual Setup Required**: The following files need to be obtained manually and placed in `bepinex/plugins/`:
+### Required Assembly Files for Plugin Development
 
-**BepInEx Runtime:**
-- `BepInEx.dll`
-- `BepInEx.Harmony.dll` 
-- `BepInEx.MonoMod.dll`
+**⚠️ Only needed if modifying plugin source code**
 
-**Valheim Game Assemblies:**
+To compile the C# plugins, you need Valheim game assemblies in `bepinex/plugins/`:
 - `Assembly-CSharp.dll` (Valheim's main game assembly)
 - `UnityEngine.dll` and related modules
+- `BepInEx.dll`, `BepInEx.Harmony.dll`
 
-**Quick Setup:**
-```bash
-# Install .NET Framework 4.8 SDK
-sudo apt update && sudo apt install dotnet-sdk-4.8
+**Extraction methods:** See `ASSEMBLY_EXTRACTION_GUIDE.md`
 
-# Install BepInEx templates (already done)
-dotnet new -i BepInEx.Templates --nuget-source https://nuget.bepinex.dev/v3/index.json
+**Note:** Pre-compiled plugins (`VWE_AutoSave.dll`, `VWE_DataExporter.dll`) are already in `bepinex/plugins/` and ready to use.
 
-# Get assembly files (choose one method):
-# Method 1: Download from Thunderstore
-wget "https://thunderstore.io/package/download/BepInEx/BepInExPack_Valheim/5.4.2202/"
+## Architecture
 
-# Method 2: Extract from Valheim installation
-cp /path/to/valheim/valheim_server_Data/Managed/Assembly-CSharp.dll bepinex/plugins/
-cp /path/to/valheim/valheim_server_Data/Managed/UnityEngine*.dll bepinex/plugins/
+**Key Differences from Backend Approach:**
 
-# Method 3: Use existing Valheim server installation
-# Copy files from your Valheim server directory
-```
+1. **Custom Docker Image:**
+   - Backend uses `lloesche/valheim-server` (Debian 11, GLIBC 2.31)
+   - BepInEx uses custom `vwe/valheim-bepinex` (Debian 12, GLIBC 2.36)
+   - **Why:** BepInEx doorstop loader requires GLIBC 2.33+
 
-## Overview
+2. **Programmatic Control:**
+   - Backend relies on graceful shutdown hooks (timing-based)
+   - BepInEx uses **custom VWE plugins** that hook world generation events
+   - VWE plugins trigger saves immediately when generation completes
 
-BepInEx provides direct access to Valheim's internal systems, enabling:
-- **Programmatic world saves** (eliminates 20-30 minute autosave wait)
-- **Real-time data export** (biomes, heightmaps, structures)
-- **Event-driven world generation** (hooks into world completion events)
-- **Performance optimization** (30-60 second generation vs 2-3 minutes)
+3. **Data Export:**
+   - Backend extracts data post-generation
+   - BepInEx exports biomes/heightmaps **during** generation
+
+**Performance Achieved:**
+- Eliminates wait for autosave timer (20-30 min)
+- World generation + save: ~17 seconds
+- **10x faster than backend approach** (2-3 minutes)
+- Data export in progress (coroutines need debugging)
 
 ## Directory Structure
 
 ```
 bepinex/
 ├── README.md                    # This file
-├── docker/                      # Docker configuration
-│   ├── Dockerfile              # Custom Valheim server with BepInEx
-│   └── docker-compose.override.yml
 ├── src/                        # BepInEx plugin source code
 │   ├── VWE_AutoSave/          # Auto-save plugin
 │   │   ├── VWE_AutoSave.cs
@@ -68,12 +88,17 @@ bepinex/
 │           ├── BiomeExporter.cs
 │           ├── HeightmapExporter.cs
 │           └── StructureExporter.cs
-├── plugins/                    # Compiled plugin binaries
-│   ├── VWE_AutoSave.dll
-│   └── VWE_DataExporter.dll
-└── config/                     # BepInEx configuration
-    ├── BepInEx.cfg
-    └── VWE_DataExporter.cfg
+├── plugins/                    # Compiled plugin DLLs (ready to use)
+│   ├── VWE_AutoSave.dll       # Triggers immediate save on world gen complete
+│   ├── VWE_DataExporter.dll   # Exports biome/heightmap data
+│   └── [assembly files...]    # Required for compilation only
+├── config/                     # BepInEx configuration
+│   ├── BepInEx.cfg            # BepInEx runtime config
+│   └── VWE_DataExporter.cfg   # Plugin-specific settings
+└── Makefile                    # Build automation
+
+../docker/bepinex/              # Isolated Docker setup
+└── docker-compose.bepinex.yml # Standalone compose file
 ```
 
 ## Plugins
@@ -83,9 +108,10 @@ bepinex/
 
 **Key Features**:
 - Hooks into `ZoneSystem.Start` event (world generation complete)
-- Calls `ZNet.instance.ConsoleSave()` programmatically
+- Calls `ZNet.instance.Save(true)` programmatically (synchronous save)
 - Configurable save triggers and timing
 - Logs save events for debugging
+- **Status**: ✅ Working (saves in ~67ms)
 
 **Configuration**:
 ```ini
@@ -107,6 +133,7 @@ log_saves = true
 - Structure detection and mapping
 - JSON/PNG export formats
 - Configurable export intervals
+- **Status**: ⏳ Coroutines start but not completing (under investigation)
 
 **Configuration**:
 ```ini
@@ -153,79 +180,92 @@ The `docker-compose.override.yml` extends the main compose file with:
 
 ## Usage
 
-### Prerequisites Check
-Before building, ensure you have the required assembly files in `bepinex/plugins/`:
+### Quick Start (Using Pre-Compiled Plugins)
+
+**No build required** - plugins are already compiled in `bepinex/plugins/`:
 
 ```bash
-# Check for required files
-ls -la bepinex/plugins/
-# Should show: BepInEx.dll, BepInEx.Harmony.dll, BepInEx.MonoMod.dll, Assembly-CSharp.dll, UnityEngine.dll
+# From repo root
+cd docker/bepinex
+
+# Run BepInEx approach (isolated from backend)
+docker compose -f docker-compose.bepinex.yml --profile bepinex up
+
+# Monitor logs for plugin activity
+docker logs -f vwe-valheim-bepinex | grep -E "(VWE|BepInEx)"
+
+# Check for world files
+ls -la ../../data/seeds/hkLycKKCMI/worlds_local/
+
+# Check for exported data
+ls -la ../../data/seeds/hkLycKKCMI/world_data/
 ```
 
-### Development Workflow
+### Development Workflow (Modifying Plugins)
 
-1. **Setup assembly files** (if not already done):
+**Only needed if changing plugin source code:**
+
+1. **Setup assembly files** (one-time):
    ```bash
-   # Download BepInEx from Thunderstore or extract from Valheim installation
-   # Place files in bepinex/plugins/ directory
+   # See ASSEMBLY_EXTRACTION_GUIDE.md for extraction methods
+   # Required files in bepinex/plugins/:
+   # - Assembly-CSharp.dll
+   # - UnityEngine.dll (and modules)
+   # - BepInEx.dll, BepInEx.Harmony.dll
    ```
 
-2. **Build plugins**:
+2. **Modify plugin source**:
+   ```bash
+   # Edit files in src/VWE_AutoSave/ or src/VWE_DataExporter/
+   ```
+
+3. **Build plugins**:
    ```bash
    cd bepinex
    make build
-   # Or manually:
-   # cd src/VWE_AutoSave && dotnet build -c Release
-   # cd ../VWE_DataExporter && dotnet build -c Release
+   # Outputs updated DLLs to plugins/ directory
    ```
 
-3. **Build Docker image**:
+4. **Test changes**:
    ```bash
-   cd bepinex
-   make docker-build
-   # Or manually:
-   # cd docker && docker build -t vwe/valheim-server-bepinex:latest .
+   # Restart container to load new plugins
+   cd ../docker/bepinex
+   docker compose -f docker-compose.bepinex.yml down
+   docker compose -f docker-compose.bepinex.yml --profile bepinex up
    ```
 
-4. **Update world_generator.py**:
-   - Change `VALHEIM_IMAGE` to `vwe/valheim-server-bepinex:latest`
-   - Add BepInEx-specific environment variables
-   - Update expected output paths for exported data
+### Integration with Backend (Future)
 
-### Production Deployment
+**Current state:** Fully isolated for testing
 
-1. **Build and push image**:
-   ```bash
-   docker build -t vwe/valheim-server-bepinex:latest bepinex/docker/
-   docker push vwe/valheim-server-bepinex:latest
-   ```
+**Future integration:** Once validated, the backend's `world_generator.py` can optionally use this approach by:
+- Checking for `BEPINEX_APPROACH=true` env var
+- Using different container orchestration
+- Expecting exported data in `/config/world_data/`
 
-2. **Update configuration**:
-   - Set `VALHEIM_IMAGE=vwe/valheim-server-bepinex:latest` in `.env`
-   - Configure BepInEx settings in `bepinex/config/`
-
-3. **Deploy**:
-   ```bash
-   docker-compose up -d
-   ```
+**No changes to backend until BepInEx approach is proven reliable.**
 
 ## Configuration
 
 ### Environment Variables
 
-```bash
-# BepInEx Configuration
-BEPINEX_ENABLED=true
-BEPINEX_LOG_LEVEL=Info
-BEPINEX_LOG_CONSOLE=true
-BEPINEX_LOG_FILE=true
+**Configured in `docker/bepinex/docker-compose.bepinex.yml`:**
 
-# Plugin Configuration
+```bash
+# Enable BepInEx (lloesche native support)
+BEPINEX=true
+
+# VWE Plugin Configuration (read by custom plugins)
 VWE_AUTOSAVE_ENABLED=true
 VWE_AUTOSAVE_DELAY=2
 VWE_DATAEXPORT_ENABLED=true
 VWE_DATAEXPORT_FORMAT=both
-VWE_DATAEXPORT_DIR=./world_data
+VWE_DATAEXPORT_DIR=/config/world_data
+
+# Inherits from .env:
+# - HOST_DATA_DIR
+# - WORLD_NAME
+# - HOST_UID/HOST_GID (mapped to PUID/PGID)
 ```
 
 ### Plugin Settings

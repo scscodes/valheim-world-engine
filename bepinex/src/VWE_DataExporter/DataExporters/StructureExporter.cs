@@ -19,91 +19,83 @@ namespace VWE_DataExporter.DataExporters
 
         public IEnumerator ExportStructures(string exportPath, string format)
         {
-            try
+            _logger.LogInfo("VWE DataExporter: Starting structure export");
+
+            // Check WorldGenerator availability
+            if (WorldGenerator.instance == null)
             {
-                _logger.LogInfo("VWE DataExporter: Starting structure export");
-
-                // Get structure data from ZoneSystem
-                var zoneSystem = ZoneSystem.instance;
-                if (zoneSystem == null)
-                {
-                    _logger.LogWarning("VWE DataExporter: ZoneSystem not available for structure export");
-                    yield break;
-                }
-
-                var structureData = new Dictionary<string, object>();
-                var structures = new List<Dictionary<string, object>>();
-
-                // Find all structures in the world
-                var allStructures = FindAllStructures();
-                
-                foreach (var structure in allStructures)
-                {
-                    var structureInfo = new Dictionary<string, object>
-                    {
-                        ["name"] = structure.name,
-                        ["position"] = new
-                        {
-                            x = structure.transform.position.x,
-                            y = structure.transform.position.y,
-                            z = structure.transform.position.z
-                        },
-                        ["rotation"] = new
-                        {
-                            x = structure.transform.rotation.x,
-                            y = structure.transform.rotation.y,
-                            z = structure.transform.rotation.z,
-                            w = structure.transform.rotation.w
-                        },
-                        ["scale"] = new
-                        {
-                            x = structure.transform.localScale.x,
-                            y = structure.transform.localScale.y,
-                            z = structure.transform.localScale.z
-                        },
-                        ["tag"] = structure.tag,
-                        ["layer"] = structure.layer
-                    };
-
-                    // Add biome information
-                    var biome = GetBiomeAtPosition(structure.transform.position);
-                    structureInfo["biome"] = biome.ToString();
-
-                    // Add height information
-                    var height = GetHeightAtPosition(structure.transform.position);
-                    structureInfo["height"] = height;
-
-                    structures.Add(structureInfo);
-
-                    // Yield every 10 structures to prevent frame drops
-                    if (structures.Count % 10 == 0)
-                    {
-                        yield return null;
-                    }
-                }
-
-                // Prepare export data
-                structureData["structure_count"] = structures.Count;
-                structureData["structures"] = structures;
-                structureData["export_timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-
-                // Export based on format
-                if (format == "json" || format == "both")
-                {
-                    ExportStructuresJson(exportPath, structureData);
-                }
-
-                if (format == "png" || format == "both")
-                {
-                    yield return StartCoroutine(ExportStructuresPng(exportPath, structures));
-                }
-
-                _logger.LogInfo($"VWE DataExporter: Structure export completed successfully ({structures.Count} structures)");
+                _logger.LogWarning("VWE DataExporter: WorldGenerator not available for structure export");
+                yield break;
             }
-            catch (Exception ex)
+
+            var structureData = new Dictionary<string, object>();
+            var structures = new List<Dictionary<string, object>>();
+
+            // Find all structures in the world
+            var allStructures = FindAllStructures();
+            
+            foreach (var structure in allStructures)
             {
-                _logger.LogError($"VWE DataExporter: Structure export failed: {ex.Message}");
+                var structureInfo = new Dictionary<string, object>
+                {
+                    ["name"] = structure.name,
+                    ["position"] = new
+                    {
+                        x = structure.transform.position.x,
+                        y = structure.transform.position.y,
+                        z = structure.transform.position.z
+                    },
+                    ["rotation"] = new
+                    {
+                        x = structure.transform.rotation.x,
+                        y = structure.transform.rotation.y,
+                        z = structure.transform.rotation.z,
+                        w = structure.transform.rotation.w
+                    },
+                    ["scale"] = new
+                    {
+                        x = structure.transform.localScale.x,
+                        y = structure.transform.localScale.y,
+                        z = structure.transform.localScale.z
+                    },
+                    ["tag"] = structure.tag,
+                    ["layer"] = structure.layer
+                };
+
+                // Add biome information
+                var biome = GetBiomeAtPosition(structure.transform.position.x, structure.transform.position.z);
+                structureInfo["biome"] = biome.ToString();
+
+                // Add height information
+                var height = GetHeightAtPosition(structure.transform.position.x, structure.transform.position.z);
+                structureInfo["height"] = height;
+
+                structures.Add(structureInfo);
+
+                // Yield every 10 structures to prevent frame drops
+                if (structures.Count % 10 == 0)
+                {
+                    yield return null;
+                }
             }
+
+            // Prepare export data
+            structureData["structure_count"] = structures.Count;
+            structureData["structures"] = structures;
+            structureData["export_timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            // Export based on format (non-yielding methods)
+            if (format == "json" || format == "both")
+            {
+                ExportStructuresJson(exportPath, structureData);
+            }
+
+            if (format == "png" || format == "both")
+            {
+                ExportStructuresPng(exportPath, structures);
+            }
+
+            _logger.LogInfo($"VWE DataExporter: Structure export completed successfully ({structures.Count} structures)");
         }
 
         private List<GameObject> FindAllStructures()
@@ -144,36 +136,20 @@ namespace VWE_DataExporter.DataExporters
             return structures;
         }
 
-        private Heightmap.Biome GetBiomeAtPosition(Vector3 worldPos)
+        private Heightmap.Biome GetBiomeAtPosition(float worldX, float worldZ)
         {
-            try
-            {
-                var zoneSystem = ZoneSystem.instance;
-                if (zoneSystem == null) return Heightmap.Biome.Meadows;
-
-                var biome = zoneSystem.GetBiome(worldPos);
-                return biome;
-            }
-            catch
-            {
+            if (WorldGenerator.instance == null)
                 return Heightmap.Biome.Meadows;
-            }
+
+            return WorldGenerator.instance.GetBiome(worldX, worldZ);
         }
 
-        private float GetHeightAtPosition(Vector3 worldPos)
+        private float GetHeightAtPosition(float worldX, float worldZ)
         {
-            try
-            {
-                var zoneSystem = ZoneSystem.instance;
-                if (zoneSystem == null) return 0f;
-
-                var height = zoneSystem.GetGroundHeight(worldPos);
-                return height;
-            }
-            catch
-            {
+            if (WorldGenerator.instance == null)
                 return 0f;
-            }
+
+            return WorldGenerator.instance.GetHeight(worldX, worldZ);
         }
 
         private void ExportStructuresJson(string exportPath, Dictionary<string, object> structureData)
@@ -191,7 +167,7 @@ namespace VWE_DataExporter.DataExporters
             }
         }
 
-        private IEnumerator ExportStructuresPng(string exportPath, List<Dictionary<string, object>> structures)
+        private void ExportStructuresPng(string exportPath, List<Dictionary<string, object>> structures)
         {
             try
             {

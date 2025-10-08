@@ -98,7 +98,7 @@ Edit `ValheimSaveTrigger.csproj`:
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>libs/UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
-    </Reference>
+    </Reference>dotnet new -i BepInEx.Templates --nuget-source https://nuget.bepinex.dev/v3/index.json
   </ItemGroup>
 
   <!-- Copy output to BepInEx plugins folder for testing -->

@@ -9,23 +9,26 @@ using UnityEngine;
 namespace VWE_AutoSave
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    [BepInProcess("valheim_server.exe")]
     public class VWE_AutoSavePlugin : BaseUnityPlugin
     {
         public const string PluginGUID = "com.valheimworldengine.autosave";
         public const string PluginName = "VWE AutoSave";
         public const string PluginVersion = "1.0.0";
 
-        private static ConfigEntry<bool> _enabled;
-        private static ConfigEntry<float> _saveDelay;
-        private static ConfigEntry<bool> _logSaves;
-        private static ConfigEntry<bool> _logDebug;
+        private static ConfigEntry<bool>? _enabled;
+        private static ConfigEntry<float>? _saveDelay;
+        private static ConfigEntry<bool>? _logSaves;
+        private static ConfigEntry<bool>? _logDebug;
+        private static ManualLogSource? _logger;
 
         private static bool _worldGenerationComplete = false;
         private static bool _saveTriggered = false;
 
         private void Awake()
         {
+            // Store logger for static access
+            _logger = Logger;
+            
             // Configuration
             _enabled = Config.Bind("AutoSave", "enabled", true, "Enable/disable auto-save functionality");
             _saveDelay = Config.Bind("AutoSave", "save_delay", 2f, "Delay before triggering save (seconds)");
@@ -81,13 +84,13 @@ namespace VWE_AutoSave
                     Logger.LogInfo("VWE AutoSave: Triggering world save...");
                 }
 
-                // Trigger save via console command
+                // Trigger save via Save method
                 if (ZNet.instance != null)
                 {
-                    ZNet.instance.ConsoleSave();
+                    ZNet.instance.Save(true);  // true = sync save
                     _saveTriggered = true;
                     
-                    if (_logSaves.Value)
+                    if (_logSaves?.Value == true)
                     {
                         Logger.LogInfo("VWE AutoSave: World save triggered successfully");
                     }
@@ -109,45 +112,22 @@ namespace VWE_AutoSave
         {
             public static void Postfix(ZoneSystem __instance)
             {
-                if (!_enabled.Value) return;
+                if (_enabled?.Value != true) return;
 
-                if (_logDebug.Value)
+                // ★★★ PROMINENT DEBUG LOGGING ★★★
+                _logger?.LogInfo("★★★ VWE AutoSave: HOOK EXECUTED - ZoneSystem.Start detected ★★★");
+
+                if (_logDebug?.Value == true)
                 {
-                    Logger.LogInfo("VWE AutoSave: ZoneSystem.Start detected");
+                    _logger?.LogInfo("VWE AutoSave: ZoneSystem.Start detected");
                 }
 
                 // Mark world generation as complete
                 _worldGenerationComplete = true;
-                
-                if (_logSaves.Value)
-                {
-                    Logger.LogInfo("VWE AutoSave: World generation complete, save will be triggered");
-                }
-            }
-        }
 
-        // Harmony patch to detect world generation completion via other events
-        [HarmonyPatch(typeof(ZoneSystem), "Generate")]
-        public static class ZoneSystemGeneratePatch
-        {
-            public static void Postfix(ZoneSystem __instance)
-            {
-                if (!_enabled.Value) return;
-
-                if (_logDebug.Value)
+                if (_logSaves?.Value == true)
                 {
-                    Logger.LogInfo("VWE AutoSave: ZoneSystem.Generate completed");
-                }
-
-                // Alternative detection method
-                if (!_worldGenerationComplete)
-                {
-                    _worldGenerationComplete = true;
-                    
-                    if (_logSaves.Value)
-                    {
-                        Logger.LogInfo("VWE AutoSave: World generation complete (via Generate), save will be triggered");
-                    }
+                    _logger?.LogInfo("VWE AutoSave: World generation complete, save will be triggered");
                 }
             }
         }
@@ -158,11 +138,11 @@ namespace VWE_AutoSave
         {
             public static void Postfix(ZNet __instance, ZNetPeer peer)
             {
-                if (!_enabled.Value) return;
+                if (_enabled?.Value != true) return;
 
-                if (_logDebug.Value)
+                if (_logDebug?.Value == true)
                 {
-                    Logger.LogInfo("VWE AutoSave: New connection detected, checking world status");
+                    _logger?.LogInfo("VWE AutoSave: New connection detected, checking world status");
                 }
 
                 // Check if world is ready for saving
@@ -182,9 +162,9 @@ namespace VWE_AutoSave
             {
                 _worldGenerationComplete = true;
                 
-                if (_logSaves.Value)
+                if (_logSaves?.Value == true)
                 {
-                    Logger.LogInfo("VWE AutoSave: World generation assumed complete (timeout), save will be triggered");
+                    _logger?.LogInfo("VWE AutoSave: World generation assumed complete (timeout), save will be triggered");
                 }
             }
         }

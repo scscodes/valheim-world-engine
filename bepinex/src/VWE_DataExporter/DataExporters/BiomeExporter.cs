@@ -21,87 +21,68 @@ namespace VWE_DataExporter.DataExporters
 
         public IEnumerator ExportBiomes(string exportPath, string format)
         {
-            try
+            _logger.LogInfo($"VWE DataExporter: Starting biome export (resolution: {_resolution})");
+
+            // Check WorldGenerator availability
+            if (WorldGenerator.instance == null)
             {
-                _logger.LogInfo($"VWE DataExporter: Starting biome export (resolution: {_resolution})");
+                _logger.LogWarning("VWE DataExporter: WorldGenerator not available for biome export");
+                yield break;
+            }
 
-                // Get biome data from ZoneSystem
-                var zoneSystem = ZoneSystem.instance;
-                if (zoneSystem == null)
+            var biomeData = new Dictionary<string, object>();
+            var biomeMap = new int[_resolution, _resolution];
+
+            // Sample biome data across the world
+            var worldSize = 10000f; // Valheim world size
+            var stepSize = worldSize / _resolution;
+
+            for (int x = 0; x < _resolution; x++)
+            {
+                for (int z = 0; z < _resolution; z++)
                 {
-                    _logger.LogWarning("VWE DataExporter: ZoneSystem not available for biome export");
-                    yield break;
-                }
+                    var worldX = (x * stepSize) - (worldSize / 2);
+                    var worldZ = (z * stepSize) - (worldSize / 2);
 
-                var biomeData = new Dictionary<string, object>();
-                var biomeMap = new int[_resolution, _resolution];
+                    var biome = GetBiomeAtPosition(worldX, worldZ);
+                    biomeMap[x, z] = (int)biome;
 
-                // Sample biome data across the world
-                var worldSize = 10000f; // Valheim world size
-                var stepSize = worldSize / _resolution;
-
-                for (int x = 0; x < _resolution; x++)
-                {
-                    for (int z = 0; z < _resolution; z++)
+                    // Yield every 100 samples to prevent frame drops
+                    if ((x * _resolution + z) % 100 == 0)
                     {
-                        var worldPos = new Vector3(
-                            (x * stepSize) - (worldSize / 2),
-                            0,
-                            (z * stepSize) - (worldSize / 2)
-                        );
-
-                        var biome = GetBiomeAtPosition(worldPos);
-                        biomeMap[x, z] = (int)biome;
-
-                        // Yield every 100 samples to prevent frame drops
-                        if ((x * _resolution + z) % 100 == 0)
-                        {
-                            yield return null;
-                        }
+                        yield return null;
                     }
                 }
-
-                // Prepare export data
-                biomeData["resolution"] = _resolution;
-                biomeData["world_size"] = worldSize;
-                biomeData["biome_map"] = biomeMap;
-                biomeData["biome_names"] = GetBiomeNames();
-                biomeData["export_timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-
-                // Export based on format
-                if (format == "json" || format == "both")
-                {
-                    ExportBiomesJson(exportPath, biomeData);
-                }
-
-                if (format == "png" || format == "both")
-                {
-                    yield return StartCoroutine(ExportBiomesPng(exportPath, biomeMap));
-                }
-
-                _logger.LogInfo("VWE DataExporter: Biome export completed successfully");
             }
-            catch (Exception ex)
+
+            // Prepare export data
+            biomeData["resolution"] = _resolution;
+            biomeData["world_size"] = worldSize;
+            biomeData["biome_map"] = biomeMap;
+            biomeData["biome_names"] = GetBiomeNames();
+            biomeData["export_timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            // Export based on format (non-yielding methods)
+            if (format == "json" || format == "both")
             {
-                _logger.LogError($"VWE DataExporter: Biome export failed: {ex.Message}");
+                ExportBiomesJson(exportPath, biomeData);
             }
+
+            if (format == "png" || format == "both")
+            {
+                ExportBiomesPng(exportPath, biomeMap);
+            }
+
+            _logger.LogInfo("VWE DataExporter: Biome export completed successfully");
         }
 
-        private Heightmap.Biome GetBiomeAtPosition(Vector3 worldPos)
+        private Heightmap.Biome GetBiomeAtPosition(float worldX, float worldZ)
         {
-            try
-            {
-                var zoneSystem = ZoneSystem.instance;
-                if (zoneSystem == null) return Heightmap.Biome.Meadows;
-
-                // Get biome using ZoneSystem's method
-                var biome = zoneSystem.GetBiome(worldPos);
-                return biome;
-            }
-            catch
-            {
+            if (WorldGenerator.instance == null)
                 return Heightmap.Biome.Meadows;
-            }
+
+            // Get biome using WorldGenerator
+            return WorldGenerator.instance.GetBiome(worldX, worldZ);
         }
 
         private Dictionary<int, string> GetBiomeNames()
@@ -135,7 +116,7 @@ namespace VWE_DataExporter.DataExporters
             }
         }
 
-        private IEnumerator ExportBiomesPng(string exportPath, int[,] biomeMap)
+        private void ExportBiomesPng(string exportPath, int[,] biomeMap)
         {
             try
             {

@@ -411,8 +411,6 @@
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.8": [
-      "BepInEx.Core >= 5.4.22",
-      "BepInEx.Harmony >= 2.2.2",
       "Microsoft.NETFramework.ReferenceAssemblies >= 1.0.3"
     ]
   },
@@ -422,20 +420,22 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj",
+      "projectUniqueName": "/home/steve/projects/valhem-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj",
       "projectName": "VWE_AutoSave",
-      "projectPath": "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj",
+      "projectPath": "/home/steve/projects/valhem-world-engine/bepinex/src/VWE_AutoSave/VWE_AutoSave.csproj",
       "packagesPath": "/home/steve/.nuget/packages/",
-      "outputPath": "/home/steve/projects/valheim-world-engine/bepinex/src/VWE_AutoSave/obj/",
+      "outputPath": "/home/steve/projects/valhem-world-engine/bepinex/src/VWE_AutoSave/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
+        "/home/steve/projects/valhem-world-engine/bepinex/NuGet.config",
         "/home/steve/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net48"
       ],
       "sources": {
-        "https://api.nuget.org/v3/index.json": {}
+        "https://api.nuget.org/v3/index.json": {},
+        "https://nuget.bepinex.dev/v3/index.json": {}
       },
       "frameworks": {
         "net48": {
@@ -453,14 +453,6 @@
       "net48": {
         "targetAlias": "net48",
         "dependencies": {
-          "BepInEx.Core": {
-            "target": "Package",
-            "version": "[5.4.22, )"
-          },
-          "BepInEx.Harmony": {
-            "target": "Package",
-            "version": "[2.2.2, )"
-          },
           "Microsoft.NETFramework.ReferenceAssemblies": {
             "suppressParent": "All",
             "target": "Package",
@@ -471,25 +463,5 @@
         "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.120/RuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1101",
-      "level": "Error",
-      "message": "Unable to find package BepInEx.Core. No packages exist with this id in source(s): nuget.org",
-      "libraryId": "BepInEx.Core",
-      "targetGraphs": [
-        ".NETFramework,Version=v4.8"
-      ]
-    },
-    {
-      "code": "NU1101",
-      "level": "Error",
-      "message": "Unable to find package BepInEx.Harmony. No packages exist with this id in source(s): nuget.org",
-      "libraryId": "BepInEx.Harmony",
-      "targetGraphs": [
-        ".NETFramework,Version=v4.8"
-      ]
-    }
-  ]
+  }
 }
