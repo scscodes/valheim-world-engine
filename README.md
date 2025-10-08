@@ -180,12 +180,16 @@ data/
 ├── seeds/
 │   └── {seed_hash}/
 │       ├── raw/
-│       │   ├── world.db          # Valheim binary world save (not SQLite)
-│       │   └── world.fwl         # Valheim world metadata
+│       │   ├── {seed_hash}.db       # Valheim world save (binary, not SQLite)
+│       │   ├── {seed_hash}.fwl      # Valheim world metadata
+│       │   ├── {seed_hash}.db.old   # Optional backup written by server
+│       │   └── {seed_hash}.fwl.old  # Optional backup written by server
 │       ├── extracted/
 │       │   ├── makefwl_output.json  # MakeFwl extraction
 │       │   ├── biomes.json          # Exported by BepInEx plugin (headless)
 │       │   └── heightmap.npy        # Exported by BepInEx plugin (headless)
+│       │   ├── worldgen_plan.json   # Stage 1: Orchestration plan (env, mounts, readiness)
+│       │   └── worldgen_logs.txt    # Stage 1: Container stdout/stderr logs (for diagnostics)
 │       ├── processed/
 │       │   ├── biomes.json
 │       │   ├── heightmap.json
@@ -248,7 +252,7 @@ data/
 **Trigger:** API request with new seed
 **Process:**
 1. Create job in Redis queue
-2. Spin up docker container with `lloesche/valheim-server` (BepInEx enabled)
+2. Spin up docker container with `vwe/worldgen-runner:latest` (preinstalled Valheim) or fallback `lloesche/valheim-server` (BepInEx enabled)
 3. Configure with seed-specific environment variables and mounts:
    - `WORLD_NAME={seed_hash}`, `WORLD_SEED={seed}`, `SERVER_PUBLIC=0`, `TZ=UTC`, `UPDATE_ON_START=1`
    - Mount `data/seeds/{seed_hash}/raw` → `/config/worlds_local`
@@ -257,7 +261,7 @@ data/
    - Watch logs for `Game server connected`, `Zonesystem Start`, or `Export complete`
    - Require `.fwl` and `.db` present and size-stable for 10s
    - Timeout after 15 minutes with logs captured
-5. Copy `.db`/`.fwl` to `raw/` and exporter artifacts (`biomes.json`, `heightmap.npy`) to `extracted/`
+5. Ensure `{seed_hash}.db/.fwl` (or `.old` backups) are present under `raw/` and exporter artifacts (`biomes.json`, `heightmap.npy`) under `extracted/`. Persist container logs to `extracted/worldgen_logs.txt`.
 6. Shutdown and cleanup container
 
 **Output:** Raw world files in `data/seeds/{seed_hash}/raw/`
@@ -424,7 +428,15 @@ Framework: RQ for MVP. Worker: `rq worker --url $REDIS_URL vwe`. Retries: 3 with
   "status": "processing",
   "current_stage": "extraction",
   "progress": 45,
-  "estimated_completion": "timestamp"
+  "estimated_completion": "timestamp",
+  "generation_status": {
+    "log_path": "/absolute/or/relative/path/to/worldgen_logs.txt",
+    "timed_out": false,
+    "lines_written": 1234,
+    "log_match": true,
+    "raw_present": true,
+    "extracted_present": false
+  }
 }
 ```
 
@@ -786,8 +798,11 @@ pip install -r requirements.txt
 cd frontend
 npm install
 
+# Build worldgen base image (first time)
+docker compose --profile build-only build worldgen-runner
+
 # Start Docker services
-docker-compose up -d
+docker compose up -d --build
 
 # Initialize database
 python scripts/init_db.py

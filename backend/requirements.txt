@@ -6,3 +6,4 @@ rq>=1.16
 SQLAlchemy>=2.0
 numpy>=2.0
 Pillow>=10.0
+docker>=7.0

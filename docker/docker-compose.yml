@@ -10,6 +10,9 @@ services:
     environment:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - DATA_DIR=${DATA_DIR:-/app/data}
+      - HOST_DATA_DIR=${HOST_DATA_DIR:-${PWD}/data}
+      - REPO_ROOT=${PWD}
+      - PLUGINS_HOST_DIR=${PLUGINS_HOST_DIR:-${PWD}/docker/valheim-server/plugins}
     volumes:
       - ../backend:/app
       - ../data:/app/data
@@ -21,13 +24,41 @@ services:
     build:
       context: ../backend
     command: python -m app.worker
+    user: "0:0"
     env_file:
       - ../.env
     environment:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - DATA_DIR=${DATA_DIR:-/app/data}
+      - HOST_DATA_DIR=${HOST_DATA_DIR:-${PWD}/data}
+      - REPO_ROOT=${PWD}
+      - PLUGINS_HOST_DIR=${PLUGINS_HOST_DIR:-${PWD}/docker/valheim-server/plugins}
     volumes:
       - ../backend:/app
       - ../data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+  worldgen-runner:
+    build:
+      context: ./worldgen-runner
+    image: vwe/worldgen-runner:latest
+    profiles: ["build-only"]
+  validator:
+    build:
+      context: ../backend
+    command: python /scripts/validate_env.py
+    env_file:
+      - ../.env
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - DATA_DIR=${DATA_DIR:-/app/data}
+      - HOST_DATA_DIR=${HOST_DATA_DIR:-${PWD}/data}
+      - REPO_ROOT=${PWD}
+      - PLUGINS_HOST_DIR=${PLUGINS_HOST_DIR:-${PWD}/docker/valheim-server/plugins}
+    volumes:
+      - ../scripts:/scripts
+      - ../data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - redis
