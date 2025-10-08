@@ -6,7 +6,7 @@ from app.core.config import settings
 from app.api.routes.health import router as health_router
 from app.api.routes.seeds import router as seeds_router
 
-app = FastAPI(title="Valhem World Engine")
+app = FastAPI(title="Valheim World Engine")
 
 app.add_middleware(
 	CORSMiddleware,

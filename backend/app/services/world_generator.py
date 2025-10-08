@@ -15,6 +15,8 @@ LOG_PATTERNS = [
 	re.compile(r"Game server connected", re.IGNORECASE),
 	re.compile(r"Zonesystem Start", re.IGNORECASE),
 	re.compile(r"Export complete", re.IGNORECASE),
+	re.compile(r"Saving world", re.IGNORECASE),
+	re.compile(r"World saved", re.IGNORECASE),
 ]
 
 
@@ -26,17 +28,14 @@ def build_worldgen_plan(seed: str, seed_hash: str) -> dict:
 
 	# Host paths for Docker volume mounts (must be absolute on the host)
 	host_seed_dir = os.path.join(settings.host_data_dir, "seeds", seed_hash)
-	host_raw_dir = os.path.join(host_seed_dir, "raw")
-
-	container_worlds = "/config/worlds_local"
-	container_plugins = "/config/BepInEx/plugins"
-
+	# Mount entire seed directory to /config so server can create worlds_local/ inside
+	host_config_dir = host_seed_dir
+	
 	return {
 		"generated_at": datetime.utcnow().isoformat() + "Z",
-		"image": settings.worldgen_runner_image or settings.valheim_image,
+		"image": settings.valheim_image,
 		"env": {
-			"WORLD_NAME": seed_hash,
-			"WORLD_SEED": seed,
+			"WORLD_NAME": seed,  # Valheim uses world name as the seed
 			"SERVER_PUBLIC": "0",
 			"TZ": "UTC",
 			"UPDATE_ON_START": "1",
@@ -44,24 +43,31 @@ def build_worldgen_plan(seed: str, seed_hash: str) -> dict:
 			"SERVER_PASS": settings.server_pass,
 			# Enable BepInEx if supported by the image (no-op if not)
 			"BEPINEX": "1",
+			# Set UID/GID for proper file ownership (lloesche requirement)
+			"PUID": str(settings.host_uid or 1000),
+			"PGID": str(settings.host_gid or 1000),
+			# Graceful shutdown hook - trigger save before shutdown
+			"PRE_SERVER_SHUTDOWN_HOOK": "echo 'save' | nc -U /tmp/valheim-console 2>/dev/null || supervisorctl signal USR1 valheim-server || echo 'save' > /proc/$(pgrep -f valheim_server)/fd/0 2>/dev/null || true",
 		},
 		"volumes": {
-			host_raw_dir: container_worlds,
-			plugins_host: container_plugins,
+			host_config_dir: "/config",
 		},
 		"readiness": {
 			"log_regex": [
 				"Game server connected",
 				"Zonesystem Start",
 				"Export complete",
+				"Saving world",
+				"World saved",
 			],
 			"stable_seconds": settings.stage1_stable_sec,
 			"timeout_seconds": settings.stage1_timeout_sec,
 		},
 		"expected_outputs": {
 			"raw": [
-				os.path.join(raw_dir, f"{seed_hash}.db"),
-				os.path.join(raw_dir, f"{seed_hash}.fwl"),
+				# Server creates worlds in /config/worlds_local/, which maps to {seed_dir}/worlds_local/
+				os.path.join(seed_dir, "worlds_local", f"{seed}.db"),
+				os.path.join(seed_dir, "worlds_local", f"{seed}.fwl"),
 			],
 			"extracted": [
 				os.path.join(extracted_dir, "biomes.json"),
@@ -225,33 +231,69 @@ def run_world_generation(seed: str, seed_hash: str) -> dict:
 							job.meta["progress"] = max(job.meta.get("progress", 10), 90)
 							job.save_meta()
 
-					for pat in LOG_PATTERNS:
-						if pat.search(line):
-							log_match = True
-							break
-					# Check for output files presence and stability (allow without log readiness)
-					present = _choose_present_files(plan["expected_outputs"]["raw"]) 
-					if len(present) == len(plan["expected_outputs"]["raw"]) and _files_stable(present, plan["readiness"]["stable_seconds"]):
-						if job is not None:
-							job.meta["current_stage"] = "generation"
-							job.meta["progress"] = max(job.meta.get("progress", 10), 95)
-							job.save_meta()
+				for pat in LOG_PATTERNS:
+					if pat.search(line):
+						log_match = True
 						break
-					if time.time() > deadline:
-						timed_out = True
+				
+				# Trigger graceful shutdown after world generation completes
+				if "Failed to place all" in line or "Generated" in line:
+					# World generation is done, trigger graceful shutdown (which will save via hook)
+					try:
+						lf.flush()  # Flush logs before shutdown
+						lf.write("VWE: World generation complete, triggering graceful shutdown\n")
+						lines_written += 1
+						# Graceful shutdown with short timeout (no users)
+						container.stop(timeout=10)
+						lf.write("VWE: Graceful shutdown initiated\n")
+						lines_written += 1
+						# Break out of log monitoring loop
 						break
+					except Exception as e:
+						lf.write(f"VWE: Graceful shutdown failed: {e}\n")
+						lines_written += 1
+				
+				# Check for output files presence and stability (require both .db and .fwl)
+				present = _choose_present_files(plan["expected_outputs"]["raw"])
+				has_db = any(".db" in p for p in present)
+				has_fwl = any(".fwl" in p for p in present)
+				
+				if has_db and has_fwl and _files_stable(present, plan["readiness"]["stable_seconds"]):
+					if job is not None:
+						job.meta["current_stage"] = "generation"
+						job.meta["progress"] = max(job.meta.get("progress", 10), 95)
+						job.save_meta()
+					break
+				if time.time() > deadline:
+					timed_out = True
+					break
 		# Flush any remaining buffered text
 		if line_buffer:
 			with open(log_path, "a", encoding="utf-8") as lf:
 				lf.write(line_buffer)
 	finally:
-		# Stop the container; exporter should have emitted artifacts by now.
+		# Container should already be stopped by graceful shutdown, but ensure it's stopped
 		try:
-			container.stop(timeout=10)
+			if container.status == 'running':
+				lf.write("VWE: Container still running, forcing stop\n")
+				container.stop(timeout=5)
 		except Exception:
 			pass
 
-	present = _choose_present_files(plan["expected_outputs"]["raw"]) 
+	# Check for file stability after graceful shutdown
+	present = _choose_present_files(plan["expected_outputs"]["raw"])
+	has_db = any(".db" in p for p in present)
+	has_fwl = any(".fwl" in p for p in present)
+	
+	# If graceful shutdown didn't create .db file, wait a bit more and check again
+	if not has_db and container.status != 'running':
+		with open(log_path, "a", encoding="utf-8") as lf:
+			lf.write("VWE: Checking for files after graceful shutdown...\n")
+		time.sleep(5)  # Give it a moment for file system sync
+		present = _choose_present_files(plan["expected_outputs"]["raw"])
+		has_db = any(".db" in p for p in present)
+		has_fwl = any(".fwl" in p for p in present)
+	
 	status = {
 		"log_match": log_match,
 		"raw_present": len(present) == len(plan["expected_outputs"]["raw"]),
@@ -259,6 +301,8 @@ def run_world_generation(seed: str, seed_hash: str) -> dict:
 		"log_path": log_path,
 		"timed_out": timed_out,
 		"lines_written": lines_written,
+		"has_db": has_db,
+		"has_fwl": has_fwl,
 	}
 
 	# Reassign ownership on host to avoid root-owned artifacts

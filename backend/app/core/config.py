@@ -11,7 +11,7 @@ class Settings(BaseModel):
     valheim_image: str = os.getenv("VALHEIM_IMAGE", "lloesche/valheim-server:latest")
     worldgen_runner_image: str = os.getenv("WORLDGEN_RUNNER_IMAGE", "vwe/worldgen-runner:latest")
     valheim_branch: str = os.getenv("VALHEIM_BRANCH", "public")
-    server_name: str = os.getenv("SERVER_NAME", "Valhem World Engine")
+    server_name: str = os.getenv("SERVER_NAME", "Valheim World Engine")
     server_pass: str = os.getenv("SERVER_PASS", "secret12345")
     valheim_install_cache_dir: str = os.getenv(
         "VALHEIM_INSTALL_CACHE_DIR",
@@ -21,11 +21,11 @@ class Settings(BaseModel):
         "STEAMCMD_CACHE_DIR",
         os.path.join(os.getenv("REPO_ROOT", "/workspace"), ".cache", "steamcmd"),
     )
-    stage1_timeout_sec: int = int(os.getenv("STAGE1_TIMEOUT_SEC", "900"))
-    stage1_stable_sec: int = int(os.getenv("STAGE1_STABLE_SEC", "10"))
+    stage1_timeout_sec: int = int(os.getenv("STAGE1_TIMEOUT_SEC", "300"))  # 5 minutes with graceful shutdown
+    stage1_stable_sec: int = int(os.getenv("STAGE1_STABLE_SEC", "30"))
     pipeline_timeout_sec: int = int(os.getenv("PIPELINE_TIMEOUT_SEC", "1800"))
 
-    sqlite_path: str = os.getenv("SQLITE_PATH", os.path.join(os.getcwd(), "data", "valhem_dev.db"))
+    sqlite_path: str = os.getenv("SQLITE_PATH", os.path.join(os.getcwd(), "data", "valheim_dev.db"))
     rq_workers: int = int(os.getenv("RQ_WORKERS", "1"))
     try:
         host_uid: int | None = int(os.getenv("HOST_UID")) if os.getenv("HOST_UID") else None

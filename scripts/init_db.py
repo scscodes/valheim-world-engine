@@ -1,7 +1,7 @@
 import os
 import sqlite3
 
-DB_PATH = os.getenv("SQLITE_PATH", os.path.join(os.getcwd(), "data", "valhem_dev.db"))
+DB_PATH = os.getenv("SQLITE_PATH", os.path.join(os.getcwd(), "data", "valheim_dev.db"))
 
 DDL = """
 CREATE TABLE IF NOT EXISTS seeds (
