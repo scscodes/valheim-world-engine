@@ -30,3 +30,5 @@ procedural-generation/output/samples/hkLycKKCMI-*.json
 .idea/
 .DS_Store
 procedural-export/output/samples/*.json
+procedural-export/output/*samples-*.json
+procedural-export/viewer/*samples-*.json
