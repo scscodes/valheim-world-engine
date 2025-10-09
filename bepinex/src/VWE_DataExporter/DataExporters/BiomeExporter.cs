@@ -37,14 +37,18 @@ namespace VWE_DataExporter.DataExporters
             var biomeMap = new int[_resolution, _resolution];
 
             // Sample biome data across the world
-            var worldSize = 10000f; // Valheim world size
-            var stepSize = worldSize / _resolution;
+            // FIX: Use world diameter, not radius for full coverage
+            var worldRadius = 10000f; // Valheim world radius
+            var worldDiameter = worldRadius * 2; // 20000m total diameter
+            var stepSize = worldDiameter / _resolution;
             var totalSamples = _resolution * _resolution;
             var samplesProcessed = 0;
             var lastLoggedPercent = 0;
             var yieldCount = 0;
 
             _logger.LogInfo($"★★★ BiomeExporter: Starting sampling loop - {totalSamples} total samples, stepSize={stepSize}");
+            _logger.LogInfo($"★★★ BiomeExporter: Full world coverage - worldRadius={worldRadius}, worldDiameter={worldDiameter}");
+            _logger.LogInfo($"★★★ BiomeExporter: Coverage range - X=[{-worldRadius} to {worldRadius}], Z=[{-worldRadius} to {worldRadius}]");
 
             for (int x = 0; x < _resolution; x++)
             {
@@ -52,13 +56,21 @@ namespace VWE_DataExporter.DataExporters
                 {
                     try
                     {
-                        var worldX = (x * stepSize) - (worldSize / 2);
-                        var worldZ = (z * stepSize) - (worldSize / 2);
+                        // FIX: Calculate world coordinates to cover full ±10km range
+                        var worldX = (x * stepSize) - worldRadius;
+                        var worldZ = (z * stepSize) - worldRadius;
 
                         var biome = GetBiomeAtPosition(worldX, worldZ);
                         biomeMap[x, z] = (int)biome;
 
                         samplesProcessed++;
+
+                        // Log first and last samples to verify full world coverage
+                        if (samplesProcessed == 1 || samplesProcessed == totalSamples)
+                        {
+                            var biomeName = GetBiomeNames().ContainsKey((int)biome) ? GetBiomeNames()[(int)biome] : $"Unknown({(int)biome})";
+                            _logger.LogInfo($"★★★ BiomeExporter: Sample #{samplesProcessed}/{totalSamples} - pos=({worldX:F2}, {worldZ:F2}), biome={biomeName}");
+                        }
 
                         // Log progress every 10%
                         var percentComplete = (samplesProcessed * 100) / totalSamples;
@@ -66,7 +78,7 @@ namespace VWE_DataExporter.DataExporters
                         {
                             var elapsed = (DateTime.Now - startTime).TotalSeconds;
                             var samplesPerSec = samplesProcessed / elapsed;
-                            var biomeName = GetBiomeNames()[(int)biome];
+                            var biomeName = GetBiomeNames().ContainsKey((int)biome) ? GetBiomeNames()[(int)biome] : $"Unknown({(int)biome})";
                             _logger.LogInfo($"★★★ BiomeExporter: {percentComplete}% complete ({samplesProcessed}/{totalSamples} samples, {elapsed:F1}s elapsed, {samplesPerSec:F0} samples/sec, {yieldCount} yields) | Last: pos=({worldX:F0}, {worldZ:F0}), biome={biomeName}");
                             lastLoggedPercent = percentComplete;
                         }
@@ -94,7 +106,8 @@ namespace VWE_DataExporter.DataExporters
             try
             {
                 biomeData["resolution"] = _resolution;
-                biomeData["world_size"] = worldSize;
+                biomeData["world_radius"] = worldRadius;
+                biomeData["world_diameter"] = worldDiameter;
                 biomeData["biome_map"] = biomeMap;
                 biomeData["biome_names"] = GetBiomeNames();
                 biomeData["export_timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -134,17 +147,19 @@ namespace VWE_DataExporter.DataExporters
 
         private Dictionary<int, string> GetBiomeNames()
         {
+            // FIX: Use Valheim's actual bit flag enum values, not sequential indices
+            // Valheim uses powers of 2 for biome flags
             return new Dictionary<int, string>
             {
-                { 0, "Meadows" },
-                { 1, "BlackForest" },
-                { 2, "Swamp" },
-                { 3, "Mountain" },
-                { 4, "Plains" },
-                { 5, "Ocean" },
-                { 6, "Mistlands" },
-                { 7, "DeepNorth" },
-                { 8, "Ashlands" }
+                { 1, "Meadows" },      // Heightmap.Biome.Meadows = 1
+                { 2, "BlackForest" },  // Heightmap.Biome.BlackForest = 2
+                { 4, "Swamp" },        // Heightmap.Biome.Swamp = 4
+                { 8, "Mountain" },     // Heightmap.Biome.Mountain = 8
+                { 16, "Plains" },      // Heightmap.Biome.Plains = 16
+                { 32, "Ocean" },       // Heightmap.Biome.Ocean = 32
+                { 64, "Mistlands" },   // Heightmap.Biome.Mistlands = 64
+                { 256, "DeepNorth" },  // Heightmap.Biome.DeepNorth = 256
+                { 512, "Ashlands" }    // Heightmap.Biome.Ashlands = 512
             };
         }
 

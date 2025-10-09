@@ -238,11 +238,43 @@ def run_world_generation(seed: str, seed_hash: str) -> dict:
 				
 				# Trigger graceful shutdown after world generation completes
 				if "Failed to place all" in line or "Generated" in line:
-					# World generation is done, trigger graceful shutdown (which will save via hook)
+					# World generation is done, wait for BepInEx export to complete before shutdown
 					try:
-						lf.flush()  # Flush logs before shutdown
-						lf.write("VWE: World generation complete, triggering graceful shutdown\n")
+						lf.flush()  # Flush logs before waiting
+						lf.write("VWE: World generation complete, waiting for BepInEx export (up to 30 minutes)...\n")
 						lines_written += 1
+
+						# Wait for export completion (look for "ALL EXPORTS COMPLETE" log)
+						export_complete = False
+						export_deadline = time.time() + 1800  # 30 minute timeout for export (4M samples at 2048 resolution)
+						while time.time() < export_deadline:
+							# Continue reading logs
+							try:
+								chunk = next(log_stream)
+								text = chunk.decode("utf-8", errors="ignore")
+								line_buffer += text
+								while "\n" in line_buffer:
+									line, line_buffer = line_buffer.split("\n", 1)
+									lf.write(line + "\n")
+									lines_written += 1
+
+									if "ALL EXPORTS COMPLETE" in line:
+										export_complete = True
+										lf.write("VWE: BepInEx export complete, triggering graceful shutdown\n")
+										lines_written += 1
+										break
+								if export_complete:
+									break
+							except StopIteration:
+								# Container stopped, no more logs
+								break
+							except Exception:
+								pass
+
+						if not export_complete:
+							lf.write("VWE: Export timeout reached, triggering graceful shutdown anyway\n")
+							lines_written += 1
+
 						# Graceful shutdown with short timeout (no users)
 						container.stop(timeout=10)
 						lf.write("VWE: Graceful shutdown initiated\n")

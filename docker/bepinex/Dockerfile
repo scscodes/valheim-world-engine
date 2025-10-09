@@ -57,14 +57,16 @@ RUN for i in 1 2 3; do \
             +quit && break || sleep 5; \
     done
 
-# Download and install BepInEx 5.4.23.2 (Linux x64)
+# Download and install BepInExPack_Valheim 5.4.2333 (Valheim-specific build)
 USER root
 RUN cd /tmp && \
     curl -fsSL -o bepinex.zip \
-        'https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.2/BepInEx_linux_x64_5.4.23.2.zip' && \
-    unzip -q bepinex.zip -d /opt/valheim && \
-    rm bepinex.zip && \
-    chmod +x /opt/valheim/run_bepinex.sh 2>/dev/null || true && \
+        'https://thunderstore.io/package/download/denikson/BepInExPack_Valheim/5.4.2333/' && \
+    unzip -q bepinex.zip -d /tmp/bepinex_pack && \
+    cp -r /tmp/bepinex_pack/BepInExPack_Valheim/* /opt/valheim/ && \
+    rm -rf /tmp/bepinex.zip /tmp/bepinex_pack && \
+    chmod +x /opt/valheim/start_server_bepinex.sh 2>/dev/null || true && \
+    chmod +x /opt/valheim/start_game_bepinex.sh 2>/dev/null || true && \
     chown -R valheim:valheim /opt/valheim
 
 # Create BepInEx plugin and config directories
@@ -76,10 +78,14 @@ RUN mkdir -p /opt/valheim/BepInEx/plugins \
              /config/world_data && \
     chown -R valheim:valheim /opt/valheim/BepInEx /config
 
-# Copy VWE plugins into image (will also mount from host for development)
+# Copy VWE plugins and config into image (will also mount from host for development)
 COPY bepinex/plugins/VWE_AutoSave.dll /opt/valheim/BepInEx/plugins/
 COPY bepinex/plugins/VWE_DataExporter.dll /opt/valheim/BepInEx/plugins/
-RUN chown valheim:valheim /opt/valheim/BepInEx/plugins/VWE_*.dll
+COPY bepinex/plugins/Newtonsoft.Json.dll /opt/valheim/BepInEx/plugins/
+COPY bepinex/plugins/VWE_DataExporter.cfg /opt/valheim/BepInEx/config/
+RUN chown valheim:valheim /opt/valheim/BepInEx/plugins/VWE_*.dll && \
+    chown valheim:valheim /opt/valheim/BepInEx/plugins/Newtonsoft.Json.dll && \
+    chown valheim:valheim /opt/valheim/BepInEx/config/VWE_DataExporter.cfg
 
 # Copy entrypoint script
 COPY docker/bepinex/entrypoint.sh /usr/local/bin/entrypoint.sh

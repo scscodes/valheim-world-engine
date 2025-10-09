@@ -37,8 +37,10 @@ namespace VWE_DataExporter.DataExporters
             var heightMap = new float[_resolution, _resolution];
 
             // Sample height data across the world
-            var worldSize = 10000f; // Valheim world size
-            var stepSize = worldSize / _resolution;
+            // FIX: Use world diameter, not radius for full coverage
+            var worldRadius = 10000f; // Valheim world radius
+            var worldDiameter = worldRadius * 2; // 20000m total diameter
+            var stepSize = worldDiameter / _resolution;
             var totalSamples = _resolution * _resolution;
             var samplesProcessed = 0;
             var lastLoggedPercent = 0;
@@ -46,6 +48,8 @@ namespace VWE_DataExporter.DataExporters
             var invalidHeightCount = 0;
 
             _logger.LogInfo($"★★★ HeightmapExporter: Starting sampling loop - {totalSamples} total samples, stepSize={stepSize}");
+            _logger.LogInfo($"★★★ HeightmapExporter: Full world coverage - worldRadius={worldRadius}, worldDiameter={worldDiameter}");
+            _logger.LogInfo($"★★★ HeightmapExporter: Coverage range - X=[{-worldRadius} to {worldRadius}], Z=[{-worldRadius} to {worldRadius}]");
 
             for (int x = 0; x < _resolution; x++)
             {
@@ -53,11 +57,12 @@ namespace VWE_DataExporter.DataExporters
                 {
                     float worldX = 0f;
                     float worldZ = 0f;
-                    
+
                     try
                     {
-                        worldX = (x * stepSize) - (worldSize / 2);
-                        worldZ = (z * stepSize) - (worldSize / 2);
+                        // FIX: Calculate world coordinates to cover full ±10km range
+                        worldX = (x * stepSize) - worldRadius;
+                        worldZ = (z * stepSize) - worldRadius;
 
                         var height = GetHeightAtPosition(worldX, worldZ);
 
@@ -71,6 +76,12 @@ namespace VWE_DataExporter.DataExporters
 
                         heightMap[x, z] = height;
                         samplesProcessed++;
+
+                        // Log first and last samples to verify full world coverage
+                        if (samplesProcessed == 1 || samplesProcessed == totalSamples)
+                        {
+                            _logger.LogInfo($"★★★ HeightmapExporter: Sample #{samplesProcessed}/{totalSamples} - pos=({worldX:F2}, {worldZ:F2}), height={height:F1}m");
+                        }
 
                         // Log progress every 10%
                         var percentComplete = (samplesProcessed * 100) / totalSamples;
@@ -128,7 +139,8 @@ namespace VWE_DataExporter.DataExporters
             try
             {
                 heightmapData["resolution"] = _resolution;
-                heightmapData["world_size"] = worldSize;
+                heightmapData["world_radius"] = worldRadius;
+                heightmapData["world_diameter"] = worldDiameter;
                 heightmapData["height_map"] = heightMap;
                 heightmapData["min_height"] = minHeight;
                 heightmapData["max_height"] = maxHeight;

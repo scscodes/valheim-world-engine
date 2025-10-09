@@ -74,12 +74,12 @@ echo "  VWE_DATAEXPORT_DIR: $VWE_DATAEXPORT_DIR"
 
 # Set environment variables for Valheim server
 export SteamAppId=892970
-export LD_LIBRARY_PATH="./linux64:${LD_LIBRARY_PATH}"
 
-# Configure BepInEx
-export DOORSTOP_ENABLE=TRUE
-export DOORSTOP_INVOKE_DLL_PATH=./BepInEx/core/BepInEx.Preloader.dll
-export DOORSTOP_CORLIB_OVERRIDE_PATH=./unstripped_corlib
+# Configure BepInEx (BepInExPack_Valheim specific variables)
+export DOORSTOP_ENABLED=1
+export DOORSTOP_TARGET_ASSEMBLY=./BepInEx/core/BepInEx.Preloader.dll
+export LD_LIBRARY_PATH="./doorstop_libs:./linux64:${LD_LIBRARY_PATH}"
+export LD_PRELOAD="libdoorstop_x64.so:$LD_PRELOAD"
 
 # Change to Valheim directory
 cd /opt/valheim
@@ -88,11 +88,11 @@ echo "[VWE] Starting Valheim server with BepInEx..."
 echo "[VWE] World will be saved to: /config/worlds_local/$WORLD_NAME.db"
 echo "[VWE] Exported data will be saved to: $VWE_DATAEXPORT_DIR"
 
-# Run Valheim server with BepInEx using the BepInEx wrapper script
-# Pass executable name as first argument, then game arguments
-echo "[VWE] Launching with BepInEx wrapper..."
-exec ./run_bepinex.sh \
-    ./valheim_server.x86_64 \
+# Run Valheim server with BepInEx using the BepInExPack_Valheim launcher
+echo "[VWE] Launching with BepInExPack_Valheim (doorstop enabled)..."
+
+# Launch using the valheim_server executable directly with doorstop preloaded
+exec ./valheim_server.x86_64 \
     -nographics \
     -batchmode \
     -name "$SERVER_NAME" \

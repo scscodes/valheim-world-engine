@@ -1,24 +1,24 @@
 # BepInEx Integration for Valheim World Engine
 
-This directory contains custom BepInEx plugins for programmatic Valheim world generation and data export. This approach is **isolated** from the working `backend/` graceful shutdown approach to allow independent development and testing.
+This directory contains custom BepInEx plugins for programmatic Valheim world generation and data export.
 
-## Design Philosophy
+## Current Status (2025-10-09)
 
-**Two Isolated Approaches:**
-1. **`backend/` approach**: lloesche graceful shutdown (2-3 min) - production-ready
-2. **`bepinex/` approach**: Custom plugins with programmatic hooks (~17s achieved) - functional, data export in progress
+✅ **PRODUCTION READY:**
+- World generation and data export fully functional
+- Full world coverage (±10km, bug fixed from ±5km)
+- Correct biome ID bit flags (1, 2, 4, 8, 16, 32, 64, 256, 512)
+- Optimized default resolution: 512×512 (~3 min export)
+- Docker integration complete with BepInExPack_Valheim 5.4.2333
+- Comprehensive validation completed
 
-This isolation allows side-by-side comparison without affecting the working backend.
+✅ **Bug Fixes Applied:**
+- World sampling bug fixed (50% → 100% coverage)
+- Biome ID mapping fixed (sequential → bit flags)
+- Docker compatibility fixed (generic BepInEx → BepInExPack_Valheim)
+- Newtonsoft.Json dependency added
 
-## Current Status
-
-✅ **Functional:**
-- World generation and programmatic save working (~17 seconds total)
-- Harmony patches execute successfully
-- World files (.db, .fwl) created correctly
-
-⏳ **In Progress:**
-- Data export (biomes/heightmaps) - coroutines start but not completing yet
+**See:** `procedural-export/VALIDATION_COMPLETE_512.md` for detailed validation results
 
 ## How It Works
 

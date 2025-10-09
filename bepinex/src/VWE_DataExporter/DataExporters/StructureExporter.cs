@@ -219,10 +219,12 @@ namespace VWE_DataExporter.DataExporters
             try
             {
                 var pngPath = Path.Combine(exportPath, "structures.png");
-                
+
                 // Create a map showing structure locations
                 var resolution = 2048;
-                var worldSize = 10000f;
+                // FIX: Use world diameter, not radius for proper coordinate mapping
+                var worldRadius = 10000f;
+                var worldDiameter = worldRadius * 2; // 20000m
                 var texture = new Texture2D(resolution, resolution, TextureFormat.RGB24, false);
                 var pixels = new Color[resolution * resolution];
 
@@ -240,8 +242,9 @@ namespace VWE_DataExporter.DataExporters
                     var z = (float)position["z"];
 
                     // Convert world coordinates to texture coordinates
-                    var texX = (int)((x + worldSize / 2) / worldSize * resolution);
-                    var texZ = (int)((z + worldSize / 2) / worldSize * resolution);
+                    // FIX: Map from ±10km world space to 0-resolution texture space
+                    var texX = (int)((x + worldRadius) / worldDiameter * resolution);
+                    var texZ = (int)((z + worldRadius) / worldDiameter * resolution);
 
                     if (texX >= 0 && texX < resolution && texZ >= 0 && texZ < resolution)
                     {

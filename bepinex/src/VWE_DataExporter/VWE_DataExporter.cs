@@ -50,11 +50,11 @@ namespace VWE_DataExporter
 
             // Biome export configuration
             _biomeExportEnabled = Config.Bind("BiomeExport", "enabled", true, "Export biome data");
-            _biomeResolution = Config.Bind("BiomeExport", "resolution", 2048, "Resolution for biome maps");
+            _biomeResolution = Config.Bind("BiomeExport", "resolution", 512, "Resolution for biome maps");
 
             // Heightmap export configuration
             _heightmapExportEnabled = Config.Bind("HeightmapExport", "enabled", true, "Export heightmap data");
-            _heightmapResolution = Config.Bind("HeightmapExport", "resolution", 2048, "Resolution for heightmaps");
+            _heightmapResolution = Config.Bind("HeightmapExport", "resolution", 512, "Resolution for heightmaps");
 
             // Structure export configuration
             _structureExportEnabled = Config.Bind("StructureExport", "enabled", true, "Export structure data");
@@ -208,7 +208,7 @@ namespace VWE_DataExporter
         private IEnumerator ExportBiomeData(string exportPath)
         {
             Logger.LogInfo("★★★ VWE_DataExporter: Creating BiomeExporter instance");
-            var biomeExporter = new BiomeExporter(Logger, _biomeResolution?.Value ?? 2048);
+            var biomeExporter = new BiomeExporter(Logger, _biomeResolution?.Value ?? 512);
             Logger.LogInfo("★★★ VWE_DataExporter: Calling BiomeExporter.ExportBiomes");
             yield return biomeExporter.ExportBiomes(exportPath, _exportFormat?.Value ?? "both");
             Logger.LogInfo("★★★ VWE_DataExporter: BiomeExporter.ExportBiomes returned");
@@ -217,7 +217,7 @@ namespace VWE_DataExporter
         private IEnumerator ExportHeightmapData(string exportPath)
         {
             Logger.LogInfo("★★★ VWE_DataExporter: Creating HeightmapExporter instance");
-            var heightmapExporter = new HeightmapExporter(Logger, _heightmapResolution?.Value ?? 2048);
+            var heightmapExporter = new HeightmapExporter(Logger, _heightmapResolution?.Value ?? 512);
             Logger.LogInfo("★★★ VWE_DataExporter: Calling HeightmapExporter.ExportHeightmap");
             yield return heightmapExporter.ExportHeightmap(exportPath, _exportFormat?.Value ?? "both");
             Logger.LogInfo("★★★ VWE_DataExporter: HeightmapExporter.ExportHeightmap returned");
