@@ -75,7 +75,7 @@ class ValheimMapRenderer {
 
         try {
             // Load samples data
-            const response = await fetch('../output/samples/hkLycKKCMI-samples-512.json');
+            const response = await fetch('../output/samples/hkLycKKCMI-samples-1024.json');
             if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
             this.samplesData = await response.json();
@@ -93,7 +93,7 @@ class ValheimMapRenderer {
             btn.textContent = 'Reload Data';
             document.getElementById('downloadBtn').disabled = false;
         } catch (error) {
-            container.innerHTML = `<div class="loading" style="color: #ff6b6b;">Error: ${error.message}<br><br>Make sure sample data exists at:<br>../output/samples/hkLycKKCMI-samples-512.json</div>`;
+            container.innerHTML = `<div class="loading" style="color: #ff6b6b;">Error: ${error.message}<br><br>Make sure sample data exists at:<br>../output/samples/hkLycKKCMI-samples-1024.json</div>`;
             btn.textContent = 'Retry Load';
         } finally {
             btn.disabled = false;
@@ -263,7 +263,8 @@ class ValheimMapRenderer {
                         `World: (${sample.X.toFixed(0)}, ${sample.Z.toFixed(0)}) | ` +
                         `Grid: (${gridX}, ${gridY}) | ` +
                         `Biome: ${biomeName} | ` +
-                        `Height: ${sample.Height.toFixed(1)}m`;
+                        `Height: ${sample.Height.toFixed(1)}m | ` +
+                        `Distance: ${Math.sqrt(sample.X * sample.X + sample.Z * sample.Z).toFixed(0)}m`;
                 }
             }
         });

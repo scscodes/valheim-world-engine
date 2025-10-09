@@ -1,12 +1,12 @@
 # Valheim Map Viewer - Client
 
-Simple HTML5/Canvas visualization of 512×512 Valheim world samples.
+Simple HTML5/Canvas visualization of 1024×1024 Valheim world samples (full 20km world).
 
 ## Features
 
 - **Biome Map:** Color-coded biome visualization
 - **Height Map:** Grayscale elevation visualization
-- **Scalable:** Render at 512px (native) up to 2048px (4x upscaled)
+- **Scalable:** Render at 1024px (native) up to 4096px (4x upscaled)
 - **Smoothing Options:**
   - Pixelated (sharp, retro look)
   - Bicubic (smooth, production-ready)
@@ -43,11 +43,11 @@ Navigate to http://localhost:8080/client/ and click "Load Map Data"
 
 ### Canvas Sizes
 
-- **512×512** - Native resolution (pixelated)
-- **768×768** - 1.5x upscaled
-- **1024×1024** - 2x upscaled (recommended) ✓
-- **1536×1536** - 3x upscaled
-- **2048×2048** - 4x upscaled (smooth)
+- **1024×1024** - Native resolution (pixelated)
+- **1536×1536** - 1.5x upscaled
+- **2048×2048** - 2x upscaled (recommended) ✓
+- **3072×3072** - 3x upscaled
+- **4096×4096** - 4x upscaled (smooth)
 
 ### Smoothing
 
@@ -56,15 +56,16 @@ Navigate to http://localhost:8080/client/ and click "Load Map Data"
 
 ## Data Format
 
-Expects samples JSON at: `../output/samples/hkLycKKCMI-samples-512.json`
+Expects samples JSON at: `../output/samples/hkLycKKCMI-samples-1024.json`
 
 ```json
 {
   "WorldName": "hkLycKKCMI",
-  "Resolution": 512,
-  "SampleCount": 262144,
+  "Resolution": 1024,
+  "WorldSize": 20000.0,
+  "SampleCount": 1048576,
   "Samples": [
-    {"X": -5000.0, "Z": -5000.0, "Biome": 512, "Height": 80.5},
+    {"X": -10000.0, "Z": -10000.0, "Biome": 32, "Height": -400.0},
     ...
   ]
 }
@@ -86,9 +87,9 @@ Expects samples JSON at: `../output/samples/hkLycKKCMI-samples-512.json`
 
 ## Performance
 
-- **Load time:** ~500ms for 26MB JSON
-- **Render time:** ~100-300ms depending on canvas size
-- **Total:** <1 second from click to display
+- **Load time:** ~2-3 seconds for 104MB JSON
+- **Render time:** ~200-600ms depending on canvas size
+- **Total:** ~3-4 seconds from click to display
 
 ## Browser Compatibility
 
