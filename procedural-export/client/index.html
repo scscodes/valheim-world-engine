@@ -214,11 +214,30 @@
 
         <div class="controls">
             <div class="control-group">
+                <label>World Seed:</label>
+                <select id="seedSelector">
+                    <option value="">Select a seed...</option>
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+
+            <div class="control-group">
                 <label>Render Mode:</label>
                 <select id="renderMode">
                     <option value="biome">Biomes</option>
                     <option value="height">Height Map</option>
                 </select>
+            </div>
+
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="polarFilter" checked>
+                    Mistlands Recovery & Polar Crescents
+                </label>
+                <small style="display: block; margin-top: 5px; color: #888;">
+                    Converts outer ring polar biomes → Mistlands (fixes API priority bug)<br>
+                    Keeps Ashlands/DeepNorth only in far polar regions
+                </small>
             </div>
 
             <div class="control-group">

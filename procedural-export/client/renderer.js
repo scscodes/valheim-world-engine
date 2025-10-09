@@ -22,16 +22,75 @@ class ValheimMapRenderer {
         this.canvas = null;
         this.ctx = null;
         this.currentMode = 'biome';
+        this.polarFilter = true;  // Directional polar biome filtering
+        this.availableSeeds = [];
 
+        this.discoverSeeds();
         this.setupEventListeners();
         this.renderLegend();
     }
 
+    async discoverSeeds() {
+        // Try to find available sample files
+        const possibleSeeds = ['hnLycKKCMI', 'hkLycKKCMI'];
+        const possiblePaths = [
+            (seed, res) => `../output/${seed}-samples-${res}.json`,
+            (seed, res) => `../output/samples/${seed}-samples-${res}.json`
+        ];
+        const possibleResolutions = [512, 1024, 2048];
+
+        const seedSelector = document.getElementById('seedSelector');
+
+        for (const seed of possibleSeeds) {
+            for (const pathTemplate of possiblePaths) {
+                for (const res of possibleResolutions) {
+                    const path = pathTemplate(seed, res);
+                    try {
+                        const response = await fetch(path, { method: 'HEAD' });
+                        if (response.ok) {
+                            const seedInfo = { seed, resolution: res, path };
+                            this.availableSeeds.push(seedInfo);
+
+                            const option = document.createElement('option');
+                            option.value = path;
+                            option.textContent = `${seed} (${res}×${res})`;
+                            seedSelector.appendChild(option);
+                        }
+                    } catch (e) {
+                        // File doesn't exist, skip
+                    }
+                }
+            }
+        }
+
+        if (this.availableSeeds.length > 0) {
+            // Auto-select first seed
+            seedSelector.selectedIndex = 1;
+            console.log(`Found ${this.availableSeeds.length} available samples`);
+        }
+    }
+
     setupEventListeners() {
-        document.getElementById('loadBtn').addEventListener('click', () => this.loadData());
+        document.getElementById('seedSelector').addEventListener('change', (e) => {
+            if (e.target.value) {
+                this.loadData(e.target.value);
+            }
+        });
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            const selector = document.getElementById('seedSelector');
+            if (selector.value) {
+                this.loadData(selector.value);
+            } else {
+                alert('Please select a world seed first');
+            }
+        });
         document.getElementById('downloadBtn').addEventListener('click', () => this.downloadPNG());
         document.getElementById('renderMode').addEventListener('change', (e) => {
             this.currentMode = e.target.value;
+            if (this.samplesData) this.render();
+        });
+        document.getElementById('polarFilter').addEventListener('change', (e) => {
+            this.polarFilter = e.target.checked;
             if (this.samplesData) this.render();
         });
         document.getElementById('canvasSize').addEventListener('change', () => {
@@ -65,7 +124,7 @@ class ValheimMapRenderer {
         });
     }
 
-    async loadData() {
+    async loadData(samplePath) {
         const btn = document.getElementById('loadBtn');
         btn.disabled = true;
         btn.textContent = 'Loading...';
@@ -74,8 +133,8 @@ class ValheimMapRenderer {
         container.innerHTML = '<div class="loading">Loading sample data...</div>';
 
         try {
-            // Load samples data
-            const response = await fetch('../output/samples/hkLycKKCMI-samples-1024.json');
+            // Load samples data from specified path
+            const response = await fetch(samplePath);
             if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
             this.samplesData = await response.json();
@@ -142,8 +201,9 @@ class ValheimMapRenderer {
 
         console.log('Rendering pixels...');
 
+        let renderStats = {};
         if (this.currentMode === 'biome') {
-            this.renderBiomes(imageData, grid, resolution);
+            renderStats = this.renderBiomes(imageData, grid, resolution);
         } else {
             this.renderHeightmap(imageData, grid, resolution);
         }
@@ -153,8 +213,13 @@ class ValheimMapRenderer {
         this.ctx.drawImage(tempCanvas, 0, 0, canvasSize, canvasSize);
 
         const renderTime = (performance.now() - startTime).toFixed(1);
-        document.getElementById('stats').textContent =
-            `Rendered ${this.samplesData.SampleCount.toLocaleString()} samples in ${renderTime}ms`;
+        let statsText = `Rendered ${this.samplesData.SampleCount.toLocaleString()} samples in ${renderTime}ms`;
+
+        if (renderStats.polarFiltered) {
+            statsText += ` | Polar filter: ${renderStats.polarFiltered.toLocaleString()} reclassified (${(renderStats.polarFiltered/this.samplesData.SampleCount*100).toFixed(1)}%)`;
+        }
+
+        document.getElementById('stats').textContent = statsText;
 
         // Add mouse tracking
         this.addMouseTracking(resolution);
@@ -181,19 +246,94 @@ class ValheimMapRenderer {
 
     renderBiomes(imageData, grid, resolution) {
         const data = imageData.data;
+        const SEA_LEVEL = 30.0;  // Valheim's base height for ocean
+        const SHORELINE_DEPTH = -5.0;  // Shallow water threshold
+
+        let polarFilterCount = 0;  // Track reclassifications
 
         for (let y = 0; y < resolution; y++) {
             for (let x = 0; x < resolution; x++) {
-                const sample = grid[x][y];
-                const biomeId = sample.Biome;
-                const biome = BIOMES[biomeId];
+                // FIX: Invert Y-axis so top of screen = north (positive Z)
+                const gridY = (resolution - 1) - y;
+                const sample = grid[x][gridY];
+                let biomeId = sample.Biome;
+                const height = sample.Height;
 
+                // QUALITY FIX #1: Correct Ocean misclassification
+                // Ocean biome appears at >7900m from center, but if land is above sea level,
+                // it's actually distant land, not ocean. Render as Mistlands (the usual outer biome)
+                if (biomeId === 32 && height >= SEA_LEVEL) {
+                    biomeId = 64;  // Reclassify as Mistlands (typical outer land biome)
+                }
+
+                // QUALITY FIX #2: DeepNorth/Ashlands land vs water distinction
+                // Similar issue - these can be underwater (true ocean) or above water (land)
+                if ((biomeId === 256 || biomeId === 512) && height < (SEA_LEVEL - 10)) {
+                    biomeId = 32;  // Deep water in edge biomes = Ocean
+                }
+
+                // QUALITY FIX #4: Mistlands Recovery & Polar Biome Filtering
+                // Problem: GetBiome() checks polar biomes BEFORE Mistlands, so they "steal"
+                // the outer ring (6-10km) where Mistlands should dominate.
+                // Solution: Convert most outer ring polar biomes → Mistlands,
+                // keeping polar biomes only in far polar regions (crescents at poles)
+                if (this.polarFilter) {
+                    const worldX = sample.X;
+                    const worldZ = sample.Z;
+                    const distFromCenter = Math.sqrt(worldX * worldX + worldZ * worldZ);
+
+                    // Define outer ring where Mistlands should dominate
+                    const OUTER_RING_MIN = 6000;
+                    const OUTER_RING_MAX = 10000;
+                    const POLAR_THRESHOLD = 7000;  // Only keep polar biomes beyond this latitude
+
+                    const inOuterRing = (distFromCenter >= OUTER_RING_MIN && distFromCenter <= OUTER_RING_MAX);
+
+                    if (inOuterRing) {
+                        // Ashlands: Keep only in FAR south (Z < -POLAR_THRESHOLD)
+                        if (biomeId === 512) {
+                            if (worldZ >= -POLAR_THRESHOLD) {
+                                // Not in far south → Convert to Mistlands
+                                biomeId = 64;
+                                polarFilterCount++;
+                            }
+                            // else: Keep as Ashlands (far south crescent)
+                        }
+
+                        // DeepNorth: Keep only in FAR north (Z > POLAR_THRESHOLD)
+                        if (biomeId === 256) {
+                            if (worldZ <= POLAR_THRESHOLD) {
+                                // Not in far north → Convert to Mistlands
+                                biomeId = 64;
+                                polarFilterCount++;
+                            }
+                            // else: Keep as DeepNorth (far north crescent)
+                        }
+                    }
+                }
+
+                const biome = BIOMES[biomeId];
                 const idx = (y * resolution + x) * 4;
 
                 if (biome) {
-                    data[idx] = biome.color[0];
-                    data[idx + 1] = biome.color[1];
-                    data[idx + 2] = biome.color[2];
+                    let r = biome.color[0];
+                    let g = biome.color[1];
+                    let b = biome.color[2];
+
+                    // QUALITY FIX #3: Shoreline detection and rendering
+                    // Check if this is near water edge (height between shallow water and land)
+                    if (height > SHORELINE_DEPTH && height < SEA_LEVEL && biomeId !== 32) {
+                        // This is shoreline/shallow water - blend biome color with water
+                        const waterBlue = [59, 103, 163];  // Ocean color
+                        const blend = (height - SHORELINE_DEPTH) / (SEA_LEVEL - SHORELINE_DEPTH);
+                        r = Math.floor(r * blend + waterBlue[0] * (1 - blend));
+                        g = Math.floor(g * blend + waterBlue[1] * (1 - blend));
+                        b = Math.floor(b * blend + waterBlue[2] * (1 - blend));
+                    }
+
+                    data[idx] = r;
+                    data[idx + 1] = g;
+                    data[idx + 2] = b;
                 } else {
                     // Unknown biome - magenta
                     data[idx] = 255;
@@ -203,6 +343,10 @@ class ValheimMapRenderer {
                 data[idx + 3] = 255; // Alpha
             }
         }
+
+        return {
+            polarFiltered: this.polarFilter ? polarFilterCount : 0
+        };
     }
 
     renderHeightmap(imageData, grid, resolution) {
@@ -214,7 +358,8 @@ class ValheimMapRenderer {
 
         for (let y = 0; y < resolution; y++) {
             for (let x = 0; x < resolution; x++) {
-                const h = grid[x][y].Height;
+                const gridY = (resolution - 1) - y;
+                const h = grid[x][gridY].Height;
                 if (h < minHeight) minHeight = h;
                 if (h > maxHeight) maxHeight = h;
             }
@@ -225,7 +370,8 @@ class ValheimMapRenderer {
 
         for (let y = 0; y < resolution; y++) {
             for (let x = 0; x < resolution; x++) {
-                const sample = grid[x][y];
+                const gridY = (resolution - 1) - y;
+                const sample = grid[x][gridY];
                 const height = sample.Height;
                 const normalized = (height - minHeight) / range;
 

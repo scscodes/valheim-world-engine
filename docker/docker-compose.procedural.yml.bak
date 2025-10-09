@@ -1,0 +1,58 @@
+services:
+  valheim-procedural:
+    build:
+      context: ../../
+      dockerfile: docker/bepinex/Dockerfile
+    image: vwe/valheim-procedural:latest
+    container_name: vwe-valheim-procedural
+    profiles: ["procedural"]
+    user: "0:0"  # Start as root, entrypoint will switch to PUID/PGID
+    env_file:
+      - ../.env
+    environment:
+      # VWE Procedural Plugin Configuration
+      - VWE_PROCEDURAL_ENABLED=true
+      - VWE_PROCEDURAL_EXPORT_DIR=/config/procedural_metadata
+      - VWE_PROCEDURAL_OPTIMAL_SAMPLING=true
+      - VWE_PROCEDURAL_RESOLUTION=1024  # Full-scale 1024x1024 sampling
+      - BEPINEX=1  # Enable BepInEx
+
+      # Valheim Server Configuration
+      - SERVER_NAME=${SERVER_NAME:-Valheim Procedural Export}
+      - WORLD_NAME=${WORLD_NAME:-hnLycKKCMI}
+      - SERVER_PASS=${SERVER_PASS:-secret12345}
+      - SERVER_PUBLIC=0
+      - SERVER_PORT=${SERVER_PORT:-2456}
+      - TZ=${TZ:-UTC}
+
+      # File ownership (custom image uses PUID/PGID)
+      - PUID=${HOST_UID:-1000}
+      - PGID=${HOST_GID:-1000}
+    volumes:
+      # Mount seed-specific config directory (server creates worlds_local/ inside)
+      - ${HOST_DATA_DIR:-/home/steve/projects/valheim-world-engine/data}/seeds/${WORLD_NAME:-hnLycKKCMI}:/config
+
+      # Mount VWE Procedural plugins
+      - ${REPO_ROOT:-/home/steve/projects/valheim-world-engine}/procedural-export/plugins/VWE_ProceduralMetadata.dll:/config/bepinex/plugins/VWE_ProceduralMetadata.dll:ro
+      - ${REPO_ROOT:-/home/steve/projects/valheim-world-engine}/procedural-export/plugins/Newtonsoft.Json.dll:/config/bepinex/plugins/Newtonsoft.Json.dll:ro
+
+      # Mount BepInEx config files
+      - ${REPO_ROOT:-/home/steve/projects/valheim-world-engine}/bepinex/config/BepInEx.cfg:/config/bepinex/BepInEx.cfg:ro
+      - ${REPO_ROOT:-/home/steve/projects/valheim-world-engine}/procedural-export/config/VWE_ProceduralMetadata.cfg:/config/bepinex/config/com.valheimworldengine.proceduralmetadata.cfg:ro
+    ports:
+      - "${SERVER_PORT:-2456}:2456/udp"
+      - "2457:2457/udp"
+      - "2458:2458/udp"
+    restart: "no"
+    stop_grace_period: 300s  # Extended for full-scale sampling
+    healthcheck:
+      test: ["CMD", "test", "-f", "/config/bepinex/plugins/VWE_ProceduralMetadata.dll"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+    labels:
+      - "com.valheimworldengine.service=valheim-procedural"
+      - "com.valheimworldengine.approach=procedural-metadata"
+      - "com.valheimworldengine.version=1.0.0"
+      - "com.valheimworldengine.resolution=1024x1024"

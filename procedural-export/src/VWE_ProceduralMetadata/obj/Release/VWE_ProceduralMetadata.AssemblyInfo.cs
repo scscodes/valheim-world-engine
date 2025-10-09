@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VWE_ProceduralMetadata")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b5bcdedab5ccfe626f93346f397f16ef83b4dba4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0e4d78c3e20320711be35f1dc773b4b7e04e8138")]
 [assembly: System.Reflection.AssemblyProductAttribute("VWE_ProceduralMetadata")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VWE_ProceduralMetadata")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

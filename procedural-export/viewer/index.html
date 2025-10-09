@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valheim World Engine - Procedural Export Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .controls button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .controls button:hover {
+            background: #45a049;
+        }
+        .controls button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .info {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .info h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .info p {
+            margin: 5px 0;
+        }
+        .map-container {
+            text-align: center;
+            background: #222;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        #worldMap {
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            cursor: crosshair;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+        }
+        .biome-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .biome-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .biome-color {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #fff;
+            border-radius: 3px;
+        }
+        .coordinates {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Valheim World Engine - Procedural Export Viewer</h1>
+        
+        <div class="controls">
+            <button id="loadBtn" onclick="loadWorldData()">Load World Data</button>
+            <button id="renderBtn" onclick="renderMap()" disabled>Render Map</button>
+            <button id="downloadBtn" onclick="downloadMap()" disabled>Download Map</button>
+        </div>
+
+        <div class="info" id="worldInfo" style="display: none;">
+            <h3>World Information</h3>
+            <p><strong>World Name:</strong> <span id="worldName">-</span></p>
+            <p><strong>Seed:</strong> <span id="worldSeed">-</span></p>
+            <p><strong>Resolution:</strong> <span id="resolution">-</span></p>
+            <p><strong>Sample Count:</strong> <span id="sampleCount">-</span></p>
+            <p><strong>Export Time:</strong> <span id="exportTime">-</span></p>
+        </div>
+
+        <div class="map-container">
+            <div id="loading" class="loading">Click "Load World Data" to begin</div>
+            <canvas id="worldMap" style="display: none;"></canvas>
+            <div id="coordinates" class="coordinates" style="display: none;"></div>
+        </div>
+
+        <div class="biome-legend" id="biomeLegend" style="display: none;">
+            <!-- Biome legend will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        let worldData = null;
+        let samples = null;
+        let canvas = null;
+        let ctx = null;
+        let mapSize = 1024;
+
+        // Biome colors (matching Valheim's color scheme)
+        const biomeColors = {
+            0: '#4CAF50',   // Meadows
+            1: '#2E7D32',   // BlackForest
+            2: '#8D6E63',   // Swamp
+            3: '#E0E0E0',   // Mountain
+            4: '#FFC107',   // Plains
+            5: '#2196F3',   // Ocean
+            6: '#9C27B0',   // Mistlands
+            7: '#607D8B',   // DeepNorth
+            8: '#FF5722',   // Ashlands
+            32: '#2196F3'    // Ocean (alternative)
+        };
+
+        const biomeNames = {
+            0: 'Meadows',
+            1: 'BlackForest',
+            2: 'Swamp',
+            3: 'Mountain',
+            4: 'Plains',
+            5: 'Ocean',
+            6: 'Mistlands',
+            7: 'DeepNorth',
+            8: 'Ashlands',
+            32: 'Ocean'
+        };
+
+        async function loadWorldData() {
+            const loading = document.getElementById('loading');
+            const loadBtn = document.getElementById('loadBtn');
+            const renderBtn = document.getElementById('renderBtn');
+            const worldInfo = document.getElementById('worldInfo');
+
+            loading.textContent = 'Loading world data...';
+            loadBtn.disabled = true;
+
+            try {
+                // Load metadata
+                const metadataResponse = await fetch('hnLycKKCMI-procedural.json');
+                worldData = await metadataResponse.json();
+
+                // Load samples
+                const samplesResponse = await fetch('hnLycKKCMI-samples-1024.json');
+                const samplesData = await samplesResponse.json();
+                samples = samplesData.Samples;
+
+                // Update UI
+                document.getElementById('worldName').textContent = worldData.WorldName;
+                document.getElementById('worldSeed').textContent = worldData.Seed;
+                document.getElementById('resolution').textContent = samplesData.Resolution + 'x' + samplesData.Resolution;
+                document.getElementById('sampleCount').textContent = samplesData.SampleCount.toLocaleString();
+                document.getElementById('exportTime').textContent = new Date(samplesData.ExportTimestamp).toLocaleString();
+
+                worldInfo.style.display = 'block';
+                loading.textContent = 'World data loaded successfully!';
+                renderBtn.disabled = false;
+
+                // Create biome legend
+                createBiomeLegend();
+
+            } catch (error) {
+                loading.textContent = 'Error loading world data: ' + error.message;
+                console.error('Error:', error);
+            } finally {
+                loadBtn.disabled = false;
+            }
+        }
+
+        function createBiomeLegend() {
+            const legend = document.getElementById('biomeLegend');
+            const uniqueBiomes = [...new Set(samples.map(s => s.Biome))].sort((a, b) => a - b);
+
+            legend.innerHTML = uniqueBiomes.map(biome => `
+                <div class="biome-item">
+                    <div class="biome-color" style="background-color: ${biomeColors[biome] || '#666'}"></div>
+                    <span>${biomeNames[biome] || 'Unknown'} (${biome})</span>
+                </div>
+            `).join('');
+
+            legend.style.display = 'flex';
+        }
+
+        function renderMap() {
+            if (!samples) {
+                alert('Please load world data first');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const renderBtn = document.getElementById('renderBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const coordinates = document.getElementById('coordinates');
+
+            loading.textContent = 'Rendering map...';
+            renderBtn.disabled = true;
+
+            // Create canvas
+            canvas = document.getElementById('worldMap');
+            ctx = canvas.getContext('2d');
+            canvas.width = mapSize;
+            canvas.height = mapSize;
+            canvas.style.display = 'block';
+            loading.style.display = 'none';
+
+            // Create image data
+            const imageData = ctx.createImageData(mapSize, mapSize);
+            const data = imageData.data;
+
+            // Render samples
+            for (let i = 0; i < samples.length; i++) {
+                const sample = samples[i];
+                const x = Math.floor((sample.X + 10000) / 20); // Convert world coords to pixel coords
+                const z = Math.floor((sample.Z + 10000) / 20);
+                
+                if (x >= 0 && x < mapSize && z >= 0 && z < mapSize) {
+                    const pixelIndex = (z * mapSize + x) * 4;
+                    const color = biomeColors[sample.Biome] || '#666';
+                    
+                    // Convert hex color to RGB
+                    const r = parseInt(color.substr(1, 2), 16);
+                    const g = parseInt(color.substr(3, 2), 16);
+                    const b = parseInt(color.substr(5, 2), 16);
+                    
+                    data[pixelIndex] = r;     // Red
+                    data[pixelIndex + 1] = g; // Green
+                    data[pixelIndex + 2] = b; // Blue
+                    data[pixelIndex + 3] = 255; // Alpha
+                }
+            }
+
+            // Draw image
+            ctx.putImageData(imageData, 0, 0);
+
+            // Add mouse tracking
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseleave', () => coordinates.style.display = 'none');
+
+            renderBtn.disabled = false;
+            downloadBtn.disabled = false;
+        }
+
+        function handleMouseMove(event) {
+            if (!canvas) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Convert pixel coordinates to world coordinates
+            const worldX = (x / mapSize) * 20000 - 10000;
+            const worldZ = (y / mapSize) * 20000 - 10000;
+            
+            // Find nearest sample
+            let nearestSample = null;
+            let minDistance = Infinity;
+            
+            for (const sample of samples) {
+                const distance = Math.sqrt(
+                    Math.pow(sample.X - worldX, 2) + Math.pow(sample.Z - worldZ, 2)
+                );
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestSample = sample;
+                }
+            }
+            
+            if (nearestSample) {
+                const coordinates = document.getElementById('coordinates');
+                coordinates.style.display = 'block';
+                coordinates.style.left = (event.clientX + 10) + 'px';
+                coordinates.style.top = (event.clientY - 30) + 'px';
+                coordinates.innerHTML = `
+                    <div>World: (${worldX.toFixed(0)}, ${worldZ.toFixed(0)})</div>
+                    <div>Biome: ${biomeNames[nearestSample.Biome] || 'Unknown'}</div>
+                    <div>Height: ${nearestSample.Height.toFixed(1)}m</div>
+                `;
+            }
+        }
+
+        function downloadMap() {
+            if (!canvas) {
+                alert('Please render the map first');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.download = `valheim-world-${worldData.WorldName}-${mapSize}x${mapSize}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

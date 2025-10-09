@@ -1,5 +1,5 @@
 is_global = true
 build_property.RootNamespace = VWE_ProceduralMetadata
-build_property.ProjectDir = /home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/
+build_property.ProjectDir = /home/steve/projects/valheim-world-engine/procedural-export/src/VWE_ProceduralMetadata/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

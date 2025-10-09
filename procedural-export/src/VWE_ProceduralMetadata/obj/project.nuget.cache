@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "O9KgOVS7t2EO22SOxY9UuQ+WWqGlVa/LdbHCNuj9g1hNk2qUvvzQ6RO3HsHuZ9jQkibu9gPcpOXZpiWxzzHgkA==",
+  "dgSpecHash": "+q1dBqznj3gDwASp9lOKMIOpG17idAac6XLWJBA4TelLhNwkvepXAJvO5rg+8eExjx87Ws/UDh5CcbXZrpgdsQ==",
   "success": true,
-  "projectFilePath": "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
+  "projectFilePath": "/home/steve/projects/valheim-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
   "expectedPackageFiles": [
     "/home/steve/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
     "/home/steve/.nuget/packages/microsoft.netframework.referenceassemblies.net48/1.0.3/microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512",

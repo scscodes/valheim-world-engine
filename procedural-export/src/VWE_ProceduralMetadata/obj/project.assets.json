@@ -464,11 +464,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
+      "projectUniqueName": "/home/steve/projects/valheim-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
       "projectName": "VWE_ProceduralMetadata",
-      "projectPath": "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
+      "projectPath": "/home/steve/projects/valheim-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
       "packagesPath": "/home/steve/.nuget/packages/",
-      "outputPath": "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/obj/",
+      "outputPath": "/home/steve/projects/valheim-world-engine/procedural-export/src/VWE_ProceduralMetadata/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/steve/.nuget/NuGet/NuGet.Config"
