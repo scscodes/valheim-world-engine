@@ -125,65 +125,111 @@ namespace VWE_DataExporter
 
             try
             {
-                if (_logExports.Value)
-                {
-                    Logger.LogInfo("VWE DataExporter: Triggering data export...");
-                }
+                Logger.LogInfo("★★★ VWE_DataExporter: TriggerDataExport called");
 
                 _exportTriggered = true;
+
+                Logger.LogInfo("★★★ VWE_DataExporter: Starting ExportWorldData coroutine");
                 _exportCoroutine = StartCoroutine(ExportWorldData());
+                Logger.LogInfo("★★★ VWE_DataExporter: ExportWorldData coroutine started successfully");
             }
             catch (Exception ex)
             {
-                Logger.LogError($"VWE DataExporter: Failed to trigger export: {ex.Message}");
+                Logger.LogError($"★★★ VWE_DataExporter: FATAL - Failed to start export coroutine: {ex.GetType().Name} - {ex.Message}\nStack: {ex.StackTrace}");
             }
         }
 
         private IEnumerator ExportWorldData()
         {
-            var exportPath = Path.Combine(Application.dataPath, "..", _exportDir?.Value ?? "./world_data");
-            exportPath = Path.GetFullPath(exportPath);
+            var startTime = DateTime.Now;
+            Logger.LogInfo("★★★ VWE_DataExporter: ExportWorldData coroutine ENTERED");
+
+            string exportPath;
+            try
+            {
+                exportPath = Path.Combine(Application.dataPath, "..", _exportDir?.Value ?? "./world_data");
+                exportPath = Path.GetFullPath(exportPath);
+                Logger.LogInfo($"★★★ VWE_DataExporter: Export path resolved: {exportPath}");
+
+                // Verify directory exists
+                if (!Directory.Exists(exportPath))
+                {
+                    Logger.LogWarning($"★★★ VWE_DataExporter: Export directory doesn't exist, creating: {exportPath}");
+                    Directory.CreateDirectory(exportPath);
+                }
+                Logger.LogInfo($"★★★ VWE_DataExporter: Export directory verified");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"★★★ VWE_DataExporter: FATAL - Error resolving export path: {ex.GetType().Name} - {ex.Message}");
+                yield break;
+            }
 
             // Export biome data
             if (_biomeExportEnabled?.Value == true)
             {
+                Logger.LogInfo("★★★ VWE_DataExporter: Starting biome export phase");
                 yield return ExportBiomeData(exportPath);
+                Logger.LogInfo("★★★ VWE_DataExporter: Biome export phase completed");
+            }
+            else
+            {
+                Logger.LogInfo("★★★ VWE_DataExporter: Biome export SKIPPED (disabled)");
             }
 
             // Export heightmap data
             if (_heightmapExportEnabled?.Value == true)
             {
+                Logger.LogInfo("★★★ VWE_DataExporter: Starting heightmap export phase");
                 yield return ExportHeightmapData(exportPath);
+                Logger.LogInfo("★★★ VWE_DataExporter: Heightmap export phase completed");
+            }
+            else
+            {
+                Logger.LogInfo("★★★ VWE_DataExporter: Heightmap export SKIPPED (disabled)");
             }
 
             // Export structure data
             if (_structureExportEnabled?.Value == true)
             {
+                Logger.LogInfo("★★★ VWE_DataExporter: Starting structure export phase");
                 yield return ExportStructureData(exportPath);
+                Logger.LogInfo("★★★ VWE_DataExporter: Structure export phase completed");
+            }
+            else
+            {
+                Logger.LogInfo("★★★ VWE_DataExporter: Structure export SKIPPED (disabled)");
             }
 
-            if (_logExports?.Value == true)
-            {
-                Logger.LogInfo("VWE DataExporter: Data export completed successfully");
-            }
+            var totalTime = (DateTime.Now - startTime).TotalSeconds;
+            Logger.LogInfo($"★★★ VWE_DataExporter: ALL EXPORTS COMPLETE - Total time: {totalTime:F1}s");
         }
 
         private IEnumerator ExportBiomeData(string exportPath)
         {
+            Logger.LogInfo("★★★ VWE_DataExporter: Creating BiomeExporter instance");
             var biomeExporter = new BiomeExporter(Logger, _biomeResolution?.Value ?? 2048);
+            Logger.LogInfo("★★★ VWE_DataExporter: Calling BiomeExporter.ExportBiomes");
             yield return biomeExporter.ExportBiomes(exportPath, _exportFormat?.Value ?? "both");
+            Logger.LogInfo("★★★ VWE_DataExporter: BiomeExporter.ExportBiomes returned");
         }
 
         private IEnumerator ExportHeightmapData(string exportPath)
         {
+            Logger.LogInfo("★★★ VWE_DataExporter: Creating HeightmapExporter instance");
             var heightmapExporter = new HeightmapExporter(Logger, _heightmapResolution?.Value ?? 2048);
+            Logger.LogInfo("★★★ VWE_DataExporter: Calling HeightmapExporter.ExportHeightmap");
             yield return heightmapExporter.ExportHeightmap(exportPath, _exportFormat?.Value ?? "both");
+            Logger.LogInfo("★★★ VWE_DataExporter: HeightmapExporter.ExportHeightmap returned");
         }
 
         private IEnumerator ExportStructureData(string exportPath)
         {
+            Logger.LogInfo("★★★ VWE_DataExporter: Creating StructureExporter instance");
             var structureExporter = new StructureExporter(Logger);
+            Logger.LogInfo("★★★ VWE_DataExporter: Calling StructureExporter.ExportStructures");
             yield return structureExporter.ExportStructures(exportPath, _exportFormat?.Value ?? "both");
+            Logger.LogInfo("★★★ VWE_DataExporter: StructureExporter.ExportStructures returned");
         }
 
         // Harmony patch to detect world generation completion

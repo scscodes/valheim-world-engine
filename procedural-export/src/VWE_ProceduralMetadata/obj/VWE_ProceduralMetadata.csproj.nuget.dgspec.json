@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj": {}
+  },
+  "projects": {
+    "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
+        "projectName": "VWE_ProceduralMetadata",
+        "projectPath": "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/VWE_ProceduralMetadata.csproj",
+        "packagesPath": "/home/steve/.nuget/packages/",
+        "outputPath": "/home/steve/projects/valhem-world-engine/procedural-export/src/VWE_ProceduralMetadata/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/steve/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net48"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "targetAlias": "net48",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net48": {
+          "targetAlias": "net48",
+          "dependencies": {
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.120/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

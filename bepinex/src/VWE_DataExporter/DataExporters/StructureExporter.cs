@@ -19,83 +19,130 @@ namespace VWE_DataExporter.DataExporters
 
         public IEnumerator ExportStructures(string exportPath, string format)
         {
-            _logger.LogInfo("VWE DataExporter: Starting structure export");
+            var startTime = DateTime.Now;
+            _logger.LogInfo($"★★★ StructureExporter: START - format={format}, path={exportPath}");
 
             // Check WorldGenerator availability
             if (WorldGenerator.instance == null)
             {
-                _logger.LogWarning("VWE DataExporter: WorldGenerator not available for structure export");
+                _logger.LogError("★★★ StructureExporter: FATAL - WorldGenerator.instance is NULL");
                 yield break;
             }
+
+            _logger.LogInfo($"★★★ StructureExporter: WorldGenerator.instance verified");
 
             var structureData = new Dictionary<string, object>();
             var structures = new List<Dictionary<string, object>>();
 
             // Find all structures in the world
-            var allStructures = FindAllStructures();
-            
+            _logger.LogInfo($"★★★ StructureExporter: Finding all structures");
+            List<GameObject> allStructures;
+            try
+            {
+                allStructures = FindAllStructures();
+                _logger.LogInfo($"★★★ StructureExporter: Found {allStructures.Count} structures");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"★★★ StructureExporter: FATAL ERROR finding structures: {ex.GetType().Name} - {ex.Message}\nStack: {ex.StackTrace}");
+                yield break;
+            }
+
+            _logger.LogInfo($"★★★ StructureExporter: Processing {allStructures.Count} structures");
+
             foreach (var structure in allStructures)
             {
-                var structureInfo = new Dictionary<string, object>
+                try
                 {
-                    ["name"] = structure.name,
-                    ["position"] = new
+                    var structureInfo = new Dictionary<string, object>
                     {
-                        x = structure.transform.position.x,
-                        y = structure.transform.position.y,
-                        z = structure.transform.position.z
-                    },
-                    ["rotation"] = new
-                    {
-                        x = structure.transform.rotation.x,
-                        y = structure.transform.rotation.y,
-                        z = structure.transform.rotation.z,
-                        w = structure.transform.rotation.w
-                    },
-                    ["scale"] = new
-                    {
-                        x = structure.transform.localScale.x,
-                        y = structure.transform.localScale.y,
-                        z = structure.transform.localScale.z
-                    },
-                    ["tag"] = structure.tag,
-                    ["layer"] = structure.layer
-                };
+                        ["name"] = structure.name,
+                        ["position"] = new
+                        {
+                            x = structure.transform.position.x,
+                            y = structure.transform.position.y,
+                            z = structure.transform.position.z
+                        },
+                        ["rotation"] = new
+                        {
+                            x = structure.transform.rotation.x,
+                            y = structure.transform.rotation.y,
+                            z = structure.transform.rotation.z,
+                            w = structure.transform.rotation.w
+                        },
+                        ["scale"] = new
+                        {
+                            x = structure.transform.localScale.x,
+                            y = structure.transform.localScale.y,
+                            z = structure.transform.localScale.z
+                        },
+                        ["tag"] = structure.tag,
+                        ["layer"] = structure.layer
+                    };
 
-                // Add biome information
-                var biome = GetBiomeAtPosition(structure.transform.position.x, structure.transform.position.z);
-                structureInfo["biome"] = biome.ToString();
+                    // Add biome information
+                    var biome = GetBiomeAtPosition(structure.transform.position.x, structure.transform.position.z);
+                    structureInfo["biome"] = biome.ToString();
 
-                // Add height information
-                var height = GetHeightAtPosition(structure.transform.position.x, structure.transform.position.z);
-                structureInfo["height"] = height;
+                    // Add height information
+                    var height = GetHeightAtPosition(structure.transform.position.x, structure.transform.position.z);
+                    structureInfo["height"] = height;
 
-                structures.Add(structureInfo);
+                    structures.Add(structureInfo);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"★★★ StructureExporter: Error processing structure {structure.name}: {ex.GetType().Name} - {ex.Message}");
+                    continue; // Skip failed structure
+                }
 
-                // Yield every 10 structures to prevent frame drops
+                // Yield every 10 structures to prevent frame drops (outside try-catch)
                 if (structures.Count % 10 == 0)
                 {
                     yield return null;
                 }
+
+                // Log progress every 50 structures
+                if (structures.Count % 50 == 0 && structures.Count > 0)
+                {
+                    var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                    var lastStructure = structures[structures.Count - 1];
+                    _logger.LogInfo($"★★★ StructureExporter: Processed {structures.Count}/{allStructures.Count} structures ({elapsed:F1}s) | Last: name={lastStructure["name"]}, biome={lastStructure["biome"]}");
+                }
             }
 
+            _logger.LogInfo($"★★★ StructureExporter: Structure processing complete - {structures.Count} structures processed");
+
             // Prepare export data
-            structureData["structure_count"] = structures.Count;
-            structureData["structures"] = structures;
-            structureData["export_timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            _logger.LogInfo($"★★★ StructureExporter: Preparing export data");
+            try
+            {
+                structureData["structure_count"] = structures.Count;
+                structureData["structures"] = structures;
+                structureData["export_timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                _logger.LogInfo($"★★★ StructureExporter: Export data prepared successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"★★★ StructureExporter: Error preparing export data: {ex.GetType().Name} - {ex.Message}");
+                yield break;
+            }
 
             // Export based on format (non-yielding methods)
             if (format == "json" || format == "both")
             {
+                _logger.LogInfo($"★★★ StructureExporter: Starting JSON export");
                 ExportStructuresJson(exportPath, structureData);
             }
 
             if (format == "png" || format == "both")
             {
+                _logger.LogInfo($"★★★ StructureExporter: Starting PNG export");
                 ExportStructuresPng(exportPath, structures);
             }
 
-            _logger.LogInfo($"VWE DataExporter: Structure export completed successfully ({structures.Count} structures)");
+            var totalTime = (DateTime.Now - startTime).TotalSeconds;
+            _logger.LogInfo($"★★★ StructureExporter: COMPLETE - {structures.Count} structures, {totalTime:F1}s");
         }
 
         private List<GameObject> FindAllStructures()

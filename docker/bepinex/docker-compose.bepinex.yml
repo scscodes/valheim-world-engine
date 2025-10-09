@@ -35,6 +35,7 @@ services:
       # Mount VWE custom plugins for development (image has copies, but this overrides)
       - ${PLUGINS_HOST_DIR:-/home/steve/projects/valhem-world-engine/bepinex/plugins}/VWE_AutoSave.dll:/config/bepinex/plugins/VWE_AutoSave.dll:ro
       - ${PLUGINS_HOST_DIR:-/home/steve/projects/valhem-world-engine/bepinex/plugins}/VWE_DataExporter.dll:/config/bepinex/plugins/VWE_DataExporter.dll:ro
+      - ${PLUGINS_HOST_DIR:-/home/steve/projects/valhem-world-engine/bepinex/plugins}/Newtonsoft.Json.dll:/config/bepinex/plugins/Newtonsoft.Json.dll:ro
 
       # Mount BepInEx config files
       - ${REPO_ROOT:-/home/steve/projects/valhem-world-engine}/bepinex/config/BepInEx.cfg:/config/bepinex/BepInEx.cfg:ro

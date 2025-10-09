@@ -1,0 +1,48 @@
+{
+  "WorldName": "hkLycKKCMI",
+  "Seed": "G0Ws7CmRyU",
+  "SeedHash": -520406752,
+  "WorldSize": 10000.0,
+  "BaseNoise": {
+    "Octaves": 4,
+    "Frequency": 0.01,
+    "Amplitude": 1.0,
+    "Lacunarity": 2.0,
+    "Persistence": 0.5,
+    "Seed": -4682
+  },
+  "BiomeNoise": {
+    "Octaves": 4,
+    "Frequency": 0.01,
+    "Amplitude": 1.0,
+    "Lacunarity": 2.0,
+    "Persistence": 0.5,
+    "Seed": 3703
+  },
+  "Thresholds": {
+    "OceanDepth": -0.05,
+    "MeadowsMin": 0.05,
+    "MeadowsMax": 0.15,
+    "BlackForestMin": 0.15,
+    "BlackForestMax": 0.3,
+    "SwampMin": -0.05,
+    "SwampMax": 0.05,
+    "MountainMin": 0.4,
+    "MountainMax": 1.0,
+    "PlainsMin": 0.3,
+    "PlainsMax": 0.4,
+    "MistlandsMin": 0.35,
+    "MistlandsMax": 0.5,
+    "AshlandsMin": 0.5,
+    "AshlandsMax": 1.0,
+    "DeepNorthMin": 0.5
+  },
+  "Heightmap": {
+    "BaseHeight": 30.0,
+    "MountainHeight": 200.0,
+    "OceanDepth": 50.0,
+    "HeightScale": 1.0
+  },
+  "ExportTimestamp": "2025-10-08T22:45:44Z",
+  "ValheimVersion": "Unknown"
+}
