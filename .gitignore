@@ -29,3 +29,4 @@ procedural-generation/output/samples/hkLycKKCMI-*.json
 .vscode/
 .idea/
 .DS_Store
+procedural-export/output/samples/*.json
