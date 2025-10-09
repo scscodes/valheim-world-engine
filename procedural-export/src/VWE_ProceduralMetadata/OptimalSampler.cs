@@ -36,11 +36,11 @@ namespace VWE_ProceduralMetadata
             {
                 WorldName = worldName,
                 Resolution = _resolution,
-                WorldSize = 10000f,
+                WorldSize = 20000f,
                 Samples = new List<WorldSample>()
             };
 
-            var worldSize = 10000f;
+            var worldSize = 20000f;
             var stepSize = worldSize / _resolution;
             var totalSamples = _resolution * _resolution;
             var samplesProcessed = 0;

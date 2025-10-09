@@ -30,8 +30,8 @@ namespace VWE_ProceduralMetadata
             // Configuration
             _enabled = Config.Bind("General", "enabled", true, "Enable/disable metadata export");
             _exportDir = Config.Bind("General", "export_dir", "./procedural_metadata", "Export directory");
-            _enableOptimalSampling = Config.Bind("OptimalSampling", "enabled", true, "Enable 512x512 optimal sampling for validation");
-            _optimalResolution = Config.Bind("OptimalSampling", "resolution", 512, "Sample resolution (512 recommended)");
+            _enableOptimalSampling = Config.Bind("OptimalSampling", "enabled", true, "Enable 1024x1024 optimal sampling for validation");
+            _optimalResolution = Config.Bind("OptimalSampling", "resolution", 1024, "Sample resolution (1024 for full Valheim world)");
 
             if (_enabled.Value)
             {
@@ -103,8 +103,8 @@ namespace VWE_ProceduralMetadata
                 // Start optimal sampling if enabled
                 if (_enableOptimalSampling?.Value == true && !string.IsNullOrEmpty(metadata.WorldName))
                 {
-                    _logger.LogInfo($"★★★ ProceduralMetadata: Starting optimal sampling at {_optimalResolution?.Value ?? 512}x{_optimalResolution?.Value ?? 512}");
-                    var sampler = new OptimalSampler(_logger, _optimalResolution?.Value ?? 512);
+                    _logger.LogInfo($"★★★ ProceduralMetadata: Starting optimal sampling at {_optimalResolution?.Value ?? 1024}x{_optimalResolution?.Value ?? 1024}");
+                    var sampler = new OptimalSampler(_logger, _optimalResolution?.Value ?? 1024);
 
                     // Find MonoBehaviour to start coroutine
                     var plugin = UnityEngine.Object.FindObjectOfType<VWE_ProceduralMetadataPlugin>();

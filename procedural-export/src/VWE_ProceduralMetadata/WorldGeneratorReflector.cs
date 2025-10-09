@@ -32,7 +32,7 @@ namespace VWE_ProceduralMetadata
                 WorldName = GetWorldName(),
                 Seed = GetSeed(),
                 SeedHash = GetSeedHash(),
-                WorldSize = 10000f, // Valheim constant
+                WorldSize = 20000f, // Valheim actual world size (20km diameter)
                 ExportTimestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 ValheimVersion = GetValheimVersion()
             };
