@@ -22,6 +22,8 @@ data/
 !data/.gitkeep
 !data/seeds/
 !data/seeds/.gitkeep
+procedural-generation/output/samples/hkLycKKCMI-*.json
+
 
 # IDE
 .vscode/
