@@ -1,16 +1,43 @@
-# Valheim Mapping Solution - Project Plan
+# Valheim World Engine - Modular ETL Architecture
 
 ## Executive Summary
 
-Building a performant, accurate third-party mapping solution for Valheim that replaces valheim-map.world with improved performance, accuracy, and features. The solution uses an ETL pipeline to generate and process world data, with a modern web client for visualization.
+A performant, accurate third-party mapping solution for Valheim using a modular ETL architecture. The system generates and processes world data through self-contained generators, with a modern web client for visualization.
 
-**Primary Test Seed:** `hnLycKKCMI`
+**Primary Test Seed:** `hkLycKKCMI`  
+**Architecture:** Modular ETL generators with global configuration system
 
 ---
 
-## 1. Architecture Overview
+## 1. Project Structure
 
-### 1.1 System Components
+```
+valheim-world-engine/
+├── etl/                          # ETL Pipeline Approaches
+│   ├── experimental/             # New experimental generators
+│   ├── stable/                   # Production-ready approaches
+│   └── archive/                  # Legacy components (archived)
+│       └── legacy/               # Previous generation work
+│           ├── backend/          # FastAPI backend (archived)
+│           ├── bepinex/          # BepInEx plugins (archived)
+│           ├── data/             # Generated data (preserved)
+│           ├── docker/           # Docker orchestration (archived)
+│           ├── procedural-export/ # Procedural system (archived)
+│           └── scripts/          # Utility scripts (archived)
+├── global/                       # Global Configuration System
+│   ├── data/                     # YAML configuration files
+│   ├── generators/               # Code generators (C#, Python, TS)
+│   ├── logging/                  # VWE logging system
+│   └── docker/                   # Docker management
+├── docs/                         # Documentation
+└── README.md                     # This file
+```
+
+---
+
+## 2. Architecture Overview
+
+### 2.1 System Components
 
 ```
 ┌─────────────────┐
@@ -20,34 +47,34 @@ Building a performant, accurate third-party mapping solution for Valheim that re
          │ REST/GraphQL
          ▼
 ┌─────────────────┐      ┌──────────────┐
-│  FastAPI Server │◄────►│    Redis     │
-│   (Backend)     │      │   (Cache)    │
+│  ETL Generators │◄────►│   Global     │
+│  (Self-contained)│     │  Constants   │
 └────────┬────────┘      └──────────────┘
          │
          ▼
 ┌─────────────────┐      ┌──────────────┐
-│    SQLite DB    │      │   Docker     │
-│  (Dev/Local)    │      │  Containers  │
+│  Generated Data │      │   Docker     │
+│  (Per Generator)│      │  Containers  │
 └─────────────────┘      └──────┬───────┘
                                  │
                          ┌───────┴────────┐
                          │                │
                     ┌────▼─────┐    ┌────▼─────┐
-                    │ Valheim  │    │ MakeFwl  │
-                    │  Server  │    │Extractor │
+                    │ Valheim  │    │ BepInEx  │
+                    │  Server  │    │ Plugins  │
                     └──────────┘    └──────────┘
 ```
 
-### 1.2 Data Flow
+### 2.2 Data Flow
 
 ```
-User Input (Seed) → API Request → Job Queue (Redis)
+User Input (Seed) → ETL Generator Selection → Self-contained Processing
                                         ↓
-                    World Generation (Docker: valheim-server)
+                    World Generation (Docker: valheim-server + BepInEx)
                                         ↓
-                    File Extraction (.db, .fwl, exporter artifacts)
+                    Data Export (JSON, PNG, metadata)
                                         ↓
-                    Metadata Extraction (MakeFwl)
+                    Validation & Quality Check
                                         ↓
                     ETL Processing (Python/FastAPI)
                                         ↓
@@ -245,6 +272,19 @@ data/
 ---
 
 ## 4. ETL Pipeline Design
+
+### 4.0 Pipeline Organization
+
+**Legacy ETL Approaches** (in root directory):
+- **`bepinex/`** - BepInEx plugin-based dense sampling (production ready)
+- **`procedural-export/`** - Procedural metadata extraction (experimental)
+
+**New ETL Approaches** (in `etl/` directory):
+- **`etl/stable/`** - New production-ready approaches (validated & deployed)
+- **`etl/experimental/`** - New early-stage approaches (research & development)  
+- **`etl/archive/`** - New deprecated approaches (historical reference)
+
+See `etl/README.md` for detailed information about the new ETL maturity levels and migration paths.
 
 ### 4.1 Pipeline Stages
 

@@ -1,0 +1,95 @@
+// Generated Valheim Constants
+// ===========================
+// DO NOT EDIT - Generated from global/data/*.yml
+// Generated: {{last_updated}}
+
+using System.Collections.Generic;
+
+namespace VWE_DataExporter
+{
+    public static class ValheimConstants
+    {
+        // World dimensions
+        public const float WORLD_RADIUS = {{world_radius}}f;
+        public const float WORLD_DIAMETER = {{world_diameter}}f;
+        public const float WATER_EDGE = {{water_edge}}f;
+        
+        // Coordinate system
+        public const float COORDINATE_ORIGIN_X = {{coordinate_origin_x}}f;
+        public const float COORDINATE_ORIGIN_Z = {{coordinate_origin_z}}f;
+        public const string COORDINATE_UNIT = "{{coordinate_unit}}";
+        
+        // Height system
+        public const float SEA_LEVEL = {{sea_level}}f;
+        public const float HEIGHT_MULTIPLIER = {{height_multiplier}}f;
+        public const float OCEAN_THRESHOLD = {{ocean_threshold}}f;
+        public const float MOUNTAIN_THRESHOLD = {{mountain_threshold}}f;
+        
+        // Biome IDs
+        public const int BIOME_MEADOWS = 1;
+        public const int BIOME_BLACKFOREST = 2;
+        public const int BIOME_SWAMP = 4;
+        public const int BIOME_MOUNTAIN = 8;
+        public const int BIOME_PLAINS = 16;
+        public const int BIOME_OCEAN = 32;
+        public const int BIOME_MISTLANDS = 64;
+        public const int BIOME_DEEPNORTH = 256;
+        public const int BIOME_ASHLANDS = 512;
+        
+        // Biome names
+        public static readonly Dictionary<int, string> BIOME_NAMES = new()
+        {
+            {{#each biome_names}}
+            { {{id}}, "{{name}}" },
+            {{/each}}
+        };
+        
+        // Biome colors (RGB)
+        public static readonly Dictionary<int, (int, int, int)> BIOME_COLORS_RGB = new()
+        {
+            {{#each biome_colors_rgb}}
+            { {{id}}, ({{r}}, {{g}}, {{b}}) },
+            {{/each}}
+        };
+        
+        // Biome colors (Hex)
+        public static readonly Dictionary<int, string> BIOME_COLORS_HEX = new()
+        {
+            {{#each biome_colors_hex}}
+            { {{id}}, "{{hex}}" },
+            {{/each}}
+        };
+        
+        // Biome data
+        public static readonly Dictionary<string, BiomeData> BIOMES = new()
+        {
+            {{#each biomes}}
+            ["{{name}}"] = new BiomeData
+            {
+                Id = {{id}},
+                Rgb = ({{r}}, {{g}}, {{b}}),
+                Hex = "{{hex}}",
+                HeightRange = ({{height_min}}, {{height_max}}),
+                DistanceRange = ({{distance_min}}, {{distance_max}}),
+                NoiseThreshold = {{noise_threshold}}f,
+                PolarOffset = {{polar_offset}},
+                FallbackDistance = {{fallback_distance}},
+                MinMountainDistance = {{min_mountain_distance}}
+            },
+            {{/each}}
+        };
+    }
+    
+    public class BiomeData
+    {
+        public int Id { get; set; }
+        public (int, int, int) Rgb { get; set; }
+        public string Hex { get; set; }
+        public (int, int) HeightRange { get; set; }
+        public (int, int) DistanceRange { get; set; }
+        public float NoiseThreshold { get; set; }
+        public int PolarOffset { get; set; }
+        public float? FallbackDistance { get; set; }
+        public int? MinMountainDistance { get; set; }
+    }
+}

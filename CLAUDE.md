@@ -37,6 +37,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### File Structure
 
 ```
+bepinex/                       # Legacy: BepInEx dense sampling (production ready)
+procedural-export/             # Legacy: Procedural metadata extraction (experimental)
+
+etl/                          # New ETL pipeline approaches by maturity
+├── stable/                   # New production-ready approaches
+├── experimental/             # New early-stage approaches  
+└── archive/                  # New deprecated approaches
+
 data/seeds/{seed_hash}/
 ├── raw/                        # Generated world files from Valheim
 ├── worlds_local/               # Server creates .db and .fwl here

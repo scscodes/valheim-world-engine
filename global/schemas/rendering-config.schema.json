@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Rendering Configuration",
+  "description": "Schema for rendering and visualization settings",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "version": {"type": "string"},
+        "last_updated": {"type": "string", "format": "date"},
+        "sources": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "resolutions": {
+      "type": "object",
+      "properties": {
+        "validation": {"type": "integer"},
+        "default": {"type": "integer"},
+        "production": {"type": "integer"},
+        "maximum": {"type": "integer"}
+      }
+    },
+    "rendering": {
+      "type": "object",
+      "properties": {
+        "neighborhood": {"type": "string"},
+        "antialiasing": {"type": "boolean"},
+        "compression": {"type": "string"},
+        "quality": {"type": "integer"},
+        "dpi": {"type": "integer"}
+      }
+    },
+    "shoreline": {
+      "type": "object",
+      "properties": {
+        "detection_method": {"type": "string"},
+        "water_level": {"type": "number"},
+        "shoreline_depth_threshold": {"type": "number"},
+        "pattern": {
+          "type": "object",
+          "properties": {
+            "type": {"type": "string"},
+            "angle": {"type": "integer"},
+            "spacing": {"type": "integer"},
+            "width": {"type": "integer"}
+          }
+        },
+        "ocean_color": {"type": "string"},
+        "blend_ratio": {"type": "number"}
+      }
+    }
+  }
+}

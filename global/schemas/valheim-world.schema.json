@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Valheim World Constants",
+  "description": "Schema for Valheim World Engine core constants",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+        "last_updated": {"type": "string", "format": "date"},
+        "validation_seed": {"type": "string"},
+        "sources": {"type": "array", "items": {"type": "string"}}
+      },
+      "required": ["version", "last_updated", "sources"]
+    },
+    "world": {
+      "type": "object",
+      "properties": {
+        "radius": {"type": "number", "const": 10000.0},
+        "diameter": {"type": "number", "const": 20000.0},
+        "bounds": {"type": "array", "items": {"type": "number"}, "const": [-10000, 10000]},
+        "water_edge": {"type": "number", "const": 10500.0}
+      },
+      "required": ["radius", "diameter", "bounds", "water_edge"]
+    },
+    "coordinates": {
+      "type": "object",
+      "properties": {
+        "origin": {"type": "array", "items": {"type": "number"}, "const": [0, 0]},
+        "unit": {"type": "string", "const": "meters"},
+        "axes": {
+          "type": "object",
+          "properties": {
+            "x": {"type": "string", "const": "east_west"},
+            "y": {"type": "string", "const": "height"},
+            "z": {"type": "string", "const": "north_south"}
+          }
+        }
+      }
+    },
+    "height": {
+      "type": "object",
+      "properties": {
+        "sea_level": {"type": "number", "const": 30.0},
+        "multiplier": {"type": "number", "const": 200.0},
+        "range": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+        "ocean_threshold": {"type": "number", "const": 0.05},
+        "mountain_threshold": {"type": "number", "const": 0.4}
+      }
+    },
+    "biomes": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "type": "object",
+          "properties": {
+            "noise_threshold": {"type": "number"},
+            "height_range": {"type": "array", "items": {"type": "number"}},
+            "distance_range": {"type": "array", "items": {"type": "number"}},
+            "polar_offset": {"type": "number"},
+            "fallback_distance": {"type": ["number", "null"]},
+            "min_mountain_distance": {"type": ["number", "null"]}
+          }
+        }
+      },
+      "patternProperties": {
+        "^[A-Za-z]+$": {
+          "type": "object",
+          "properties": {
+            "id": {"type": "integer", "enum": [1, 2, 4, 8, 16, 32, 64, 256, 512]},
+            "rgb": {"type": "array", "items": {"type": "integer"}, "minItems": 3, "maxItems": 3},
+            "hex": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+            "height_range": {"type": "array", "items": {"type": "number"}},
+            "distance_range": {"type": "array", "items": {"type": "number"}},
+            "noise_threshold": {"type": "number"},
+            "polar_offset": {"type": "number"},
+            "fallback_distance": {"type": ["number", "null"]},
+            "min_mountain_distance": {"type": ["number", "null"]}
+          },
+          "required": ["id", "rgb", "hex"]
+        }
+      }
+    }
+  },
+  "required": ["metadata", "world", "coordinates", "height", "biomes"]
+}

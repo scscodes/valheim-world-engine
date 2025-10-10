@@ -1,0 +1,93 @@
+// Generated Valheim Constants
+// ===========================
+// DO NOT EDIT - Generated from global/data/*.yml
+// Generated: {{last_updated}}
+
+export const VALHEIM_WORLD = {
+    // World dimensions
+    RADIUS: {{world_radius}},
+    DIAMETER: {{world_diameter}},
+    WATER_EDGE: {{water_edge}},
+    
+    // Coordinate system
+    COORDINATE_ORIGIN: [{{coordinate_origin_x}}, {{coordinate_origin_z}}],
+    COORDINATE_UNIT: "{{coordinate_unit}}",
+    COORDINATE_AXES: {
+        x: "{{coordinate_axis_x}}",
+        y: "{{coordinate_axis_y}}",
+        z: "{{coordinate_axis_z}}"
+    },
+    
+    // Height system
+    SEA_LEVEL: {{sea_level}},
+    HEIGHT_MULTIPLIER: {{height_multiplier}},
+    HEIGHT_RANGE: [{{height_range_min}}, {{height_range_max}}],
+    OCEAN_THRESHOLD: {{ocean_threshold}},
+    MOUNTAIN_THRESHOLD: {{mountain_threshold}}
+};
+
+export const BIOMES = {
+    {{#each biomes}}
+    {{name}}: {
+        id: {{id}},
+        rgb: [{{r}}, {{g}}, {{b}}],
+        hex: "{{hex}}",
+        heightRange: [{{height_min}}, {{height_max}}],
+        distanceRange: [{{distance_min}}, {{distance_max}}],
+        noiseThreshold: {{noise_threshold}},
+        polarOffset: {{polar_offset}},
+        fallbackDistance: {{fallback_distance}},
+        minMountainDistance: {{min_mountain_distance}}
+    },
+    {{/each}}
+};
+
+// Convenience lookups
+export const BIOME_IDS = Object.fromEntries(
+    Object.entries(BIOMES).map(([name, data]) => [name, data.id])
+);
+
+export const BIOME_COLORS_RGB = Object.fromEntries(
+    Object.values(BIOMES).map(data => [data.id, data.rgb])
+);
+
+export const BIOME_COLORS_HEX = Object.fromEntries(
+    Object.values(BIOMES).map(data => [data.id, data.hex])
+);
+
+export const BIOME_NAMES = Object.fromEntries(
+    Object.entries(BIOMES).map(([name, data]) => [data.id, name])
+);
+
+// Utility functions
+export function getBiomeName(biomeId) {
+    return BIOME_NAMES[biomeId] || `Unknown(${biomeId})`;
+}
+
+export function getBiomeColorRgb(biomeId) {
+    return BIOME_COLORS_RGB[biomeId] || [255, 0, 255]; // Magenta for unknown
+}
+
+export function getBiomeColorHex(biomeId) {
+    return BIOME_COLORS_HEX[biomeId] || "#FF00FF"; // Magenta for unknown
+}
+
+export function isWithinWorldBounds(x, z) {
+    return Math.abs(x) <= VALHEIM_WORLD.RADIUS && Math.abs(z) <= VALHEIM_WORLD.RADIUS;
+}
+
+export function distanceFromCenter(x, z) {
+    return Math.sqrt(x * x + z * z);
+}
+
+export function worldToPixel(worldX, worldZ, resolution) {
+    const pixelX = Math.floor((worldX + VALHEIM_WORLD.RADIUS) * resolution / VALHEIM_WORLD.DIAMETER);
+    const pixelZ = Math.floor((worldZ + VALHEIM_WORLD.RADIUS) * resolution / VALHEIM_WORLD.DIAMETER);
+    return [pixelX, pixelZ];
+}
+
+export function pixelToWorld(pixelX, pixelZ, resolution) {
+    const worldX = (pixelX * VALHEIM_WORLD.DIAMETER / resolution) - VALHEIM_WORLD.RADIUS;
+    const worldZ = (pixelZ * VALHEIM_WORLD.DIAMETER / resolution) - VALHEIM_WORLD.RADIUS;
+    return [worldX, worldZ];
+}
