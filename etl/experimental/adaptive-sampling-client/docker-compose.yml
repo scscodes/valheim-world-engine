@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build:
+      context: ./backend/VWE_WorldDataAPI
+      dockerfile: Dockerfile
+    container_name: vwe-world-data-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+    volumes:
+      # Mount the adaptive sampling output directory
+      - ../bepinex-adaptive-sampling/output/world_data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vwe-network
+
+  # Frontend Map Viewer
+  frontend:
+    build:
+      context: ./frontend/VWE_MapViewer
+      dockerfile: Dockerfile
+    container_name: vwe-map-viewer
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    networks:
+      - vwe-network
+
+networks:
+  vwe-network:
+    driver: bridge
+
