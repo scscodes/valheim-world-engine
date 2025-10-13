@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VWE_AutoSave")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+985f26d3d333a1a98e01bd3d6e98b195ffd9a54e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f9a13df8343a84fb96f24d5849b0c8d0bb2e0b50")]
 [assembly: System.Reflection.AssemblyProductAttribute("VWE_AutoSave")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VWE_AutoSave")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

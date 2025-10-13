@@ -12,17 +12,22 @@ namespace VWE_DataExporter.DataExporters
     {
         private readonly ManualLogSource _logger;
         private readonly int _resolution;
+        private readonly bool _useDynamicYield;
+        private readonly int _yieldIntervalMs;
 
-        public BiomeExporter(ManualLogSource logger, int resolution)
+        public BiomeExporter(ManualLogSource logger, int resolution, bool useDynamicYield = false, int yieldIntervalMs = 100)
         {
             _logger = logger;
             _resolution = resolution;
+            _useDynamicYield = useDynamicYield;
+            _yieldIntervalMs = yieldIntervalMs;
         }
 
         public IEnumerator ExportBiomes(string exportPath, string format)
         {
             var startTime = DateTime.Now;
-            _logger.LogInfo($"★★★ BiomeExporter: START - resolution={_resolution}, format={format}, path={exportPath}");
+            var yieldStrategy = _useDynamicYield ? "TIME-BASED" : "SAMPLE-BASED";
+            _logger.LogInfo($"★★★ BiomeExporter: START - resolution={_resolution}, format={format}, yield={yieldStrategy}, interval={_yieldIntervalMs}ms, path={exportPath}");
 
             // Check WorldGenerator availability
             if (WorldGenerator.instance == null)
@@ -45,6 +50,7 @@ namespace VWE_DataExporter.DataExporters
             var samplesProcessed = 0;
             var lastLoggedPercent = 0;
             var yieldCount = 0;
+            var lastYieldTime = DateTime.Now;
 
             _logger.LogInfo($"★★★ BiomeExporter: Starting sampling loop - {totalSamples} total samples, stepSize={stepSize}");
             _logger.LogInfo($"★★★ BiomeExporter: Full world coverage - worldRadius={worldRadius}, worldDiameter={worldDiameter}");
@@ -90,8 +96,28 @@ namespace VWE_DataExporter.DataExporters
                         biomeMap[x, z] = 0; // Default to Meadows
                     }
 
-                    // Yield every 100 samples to prevent frame drops (outside try-catch)
-                    if (samplesProcessed % 100 == 0)
+                    // Yield based on strategy
+                    bool shouldYield = false;
+                    if (_useDynamicYield)
+                    {
+                        // Time-based yielding: Yield every N milliseconds
+                        var timeSinceLastYield = (DateTime.Now - lastYieldTime).TotalMilliseconds;
+                        if (timeSinceLastYield >= _yieldIntervalMs)
+                        {
+                            shouldYield = true;
+                            lastYieldTime = DateTime.Now;
+                        }
+                    }
+                    else
+                    {
+                        // Sample-based yielding: Yield every 100 samples
+                        if (samplesProcessed % 100 == 0)
+                        {
+                            shouldYield = true;
+                        }
+                    }
+
+                    if (shouldYield)
                     {
                         yieldCount++;
                         yield return null;

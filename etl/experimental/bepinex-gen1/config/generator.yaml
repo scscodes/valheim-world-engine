@@ -1,0 +1,166 @@
+# BepInEx Gen1 - Generator Configuration
+# =====================================
+# Generator-specific settings (overrides/extends global config)
+
+metadata:
+  name: "bepinex-gen1"
+  version: "0.1.0"
+  status: "experimental"
+  created: "2025-10-09"
+
+# Docker configuration
+docker:
+  image: "vwe-bepinex-gen1:latest"  # Custom image with BepInExPack_Valheim + VWE plugins
+  custom_image: "vwe-bepinex-gen1:latest"
+  container_prefix: "vwe-bepinex-gen1"
+  use_warm_containers: true  # Enable warm container manager integration
+
+  # Resource limits
+  resources:
+    memory: "4g"
+    cpus: "2.0"
+
+  # Timeouts (seconds)
+  timeouts:
+    startup: 300      # 5 min for server startup
+    generation: 600   # 10 min for world generation
+    shutdown: 60      # 1 min for graceful shutdown
+
+  # Error recovery
+  max_retries: 3
+  retry_delay: 10  # Initial delay in seconds, exponential backoff
+
+  # Mount points
+  mounts:
+    plugins_source: "etl/experimental/bepinex-gen1/plugins"
+    worlds_target: "/config/worlds_local"
+    bepinex_target: "/config/BepInEx/plugins"
+
+# BepInEx plugin configuration
+bepinex:
+  enabled: true
+  plugins:
+    - name: "VWE_DataExporter"
+      dll: "VWE_DataExporter.dll"
+      required: true
+    - name: "VWE_AutoSave"
+      dll: "VWE_AutoSave.dll"
+      required: false
+
+  # Export settings
+  export:
+    format: "json"  # biomes.json
+    heightmap_format: "json"  # heightmap.json
+    include_metadata: true
+
+# World generation settings
+generation:
+  default_resolution: 512
+
+  # Wait conditions (what to look for in logs)
+  readiness_indicators:
+    - "Game server connected"
+    - "Zonesystem Start"
+    - "Export complete"
+    - "World saved"
+
+  # File validation
+  required_files:
+    raw:
+      - "{seed}.db"
+      - "{seed}.fwl"
+    extracted:
+      - "biomes.json"
+      - "heightmap.json"
+
+  # Stability check
+  file_stability_seconds: 10
+
+# Processing settings
+processing:
+  # Import from global config
+  use_global_config: true
+
+  # Generator-specific overrides
+  heightmap:
+    normalize: true
+    interpolation: "linear"
+
+  biomes:
+    validate_ids: true
+    check_bounds: true
+
+  statistics:
+    calculate_distribution: true
+    include_percentiles: true
+
+# Rendering settings
+rendering:
+  # Import from global/data/rendering-config.yml
+  use_global_config: true
+
+  # Generator-specific formats
+  formats:
+    - webp
+  quality: 85
+
+  layers:
+    - name: "biomes_layer"
+      type: "biomes"
+      enabled: true
+    - name: "land_sea_layer"
+      type: "binary"
+      enabled: true
+    - name: "heightmap_layer"
+      type: "gradient"
+      enabled: true
+    - name: "shoreline_overlay"
+      type: "overlay"
+      enabled: true
+
+# Validation settings
+validation:
+  enabled: true
+  reference_seed: "hkLycKKCMI"
+  reference_data: "global/data/validation-data.yml"
+
+  checks:
+    - "coordinate_ranges"
+    - "height_ranges"
+    - "biome_distribution"
+    - "file_structure"
+
+  tolerances:
+    height_difference: 0.1  # meters
+    percentage_difference: 2.0  # percent
+
+# Logging settings
+logging:
+  level: "INFO"
+  format: "json"
+  output:
+    console: true
+    file: true
+    file_path: "data/logs/bepinex-gen1.log"
+
+  capture:
+    docker_logs: true
+    bepinex_logs: true
+    generation_logs: true
+
+# Output settings
+output:
+  base_dir: "etl/experimental/bepinex-gen1/data"
+  structure: "seeds/{seed_hash}"
+
+  directories:
+    - "raw"
+    - "extracted"
+    - "processed"
+    - "renders"
+
+  metadata_files:
+    plan: "extracted/worldgen_plan.json"
+    logs: "extracted/worldgen_logs.txt"
+    stats: "processed/statistics.json"
+    metadata: "processed/metadata.json"

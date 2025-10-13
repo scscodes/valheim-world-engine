@@ -29,6 +29,11 @@ namespace VWE_DataExporter
         private static ConfigEntry<bool>? _heightmapExportEnabled;
         private static ConfigEntry<int>? _heightmapResolution;
         private static ConfigEntry<bool>? _structureExportEnabled;
+
+        // Dynamic yield configuration (global for all exporters)
+        private static ConfigEntry<bool>? _useDynamicYield;
+        private static ConfigEntry<int>? _yieldIntervalMs;
+
         private static ManualLogSource? _logger;
 
         private static bool _worldGenerationComplete = false;
@@ -58,6 +63,10 @@ namespace VWE_DataExporter
 
             // Structure export configuration
             _structureExportEnabled = Config.Bind("StructureExport", "enabled", true, "Export structure data");
+
+            // Dynamic yield configuration (global for all exporters)
+            _useDynamicYield = Config.Bind("Performance", "use_dynamic_yield", false, "Use time-based yielding instead of sample-based (experimental)");
+            _yieldIntervalMs = Config.Bind("Performance", "yield_interval_ms", 100, "Yield interval in milliseconds for time-based yielding");
 
             if (_enabled.Value)
             {
@@ -208,7 +217,12 @@ namespace VWE_DataExporter
         private IEnumerator ExportBiomeData(string exportPath)
         {
             Logger.LogInfo("★★★ VWE_DataExporter: Creating BiomeExporter instance");
-            var biomeExporter = new BiomeExporter(Logger, _biomeResolution?.Value ?? 512);
+            var biomeExporter = new BiomeExporter(
+                Logger,
+                _biomeResolution?.Value ?? 512,
+                _useDynamicYield?.Value ?? false,
+                _yieldIntervalMs?.Value ?? 100
+            );
             Logger.LogInfo("★★★ VWE_DataExporter: Calling BiomeExporter.ExportBiomes");
             yield return biomeExporter.ExportBiomes(exportPath, _exportFormat?.Value ?? "both");
             Logger.LogInfo("★★★ VWE_DataExporter: BiomeExporter.ExportBiomes returned");
@@ -217,7 +231,12 @@ namespace VWE_DataExporter
         private IEnumerator ExportHeightmapData(string exportPath)
         {
             Logger.LogInfo("★★★ VWE_DataExporter: Creating HeightmapExporter instance");
-            var heightmapExporter = new HeightmapExporter(Logger, _heightmapResolution?.Value ?? 512);
+            var heightmapExporter = new HeightmapExporter(
+                Logger,
+                _heightmapResolution?.Value ?? 512,
+                _useDynamicYield?.Value ?? false,
+                _yieldIntervalMs?.Value ?? 100
+            );
             Logger.LogInfo("★★★ VWE_DataExporter: Calling HeightmapExporter.ExportHeightmap");
             yield return heightmapExporter.ExportHeightmap(exportPath, _exportFormat?.Value ?? "both");
             Logger.LogInfo("★★★ VWE_DataExporter: HeightmapExporter.ExportHeightmap returned");

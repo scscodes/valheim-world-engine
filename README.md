@@ -661,7 +661,31 @@ CREATE INDEX idx_status ON generation_jobs(status);
 
 ## 8. Performance Considerations
 
-### 8.1 Optimization Targets
+### 8.1 Current Performance & Optimization Roadmap
+
+**Current Baseline (BepInEx Approach):**
+- **512×512 resolution:** ~3 minutes (~175 seconds)
+- **2048×2048 resolution:** ~27 minutes
+- **Method:** Docker orchestration + BepInEx plugins with immediate save triggers
+
+**Proposed Optimization Strategies (2025-10-10):**
+
+1. **Adaptive Resolution Sampling with Edge Refinement** (50-65% reduction → ~1-1.5 min)
+   - Use 256×256 base sampling, detect biome boundaries, resample only at edges with higher density
+   - Exploits finding that most detail is needed at transitions, not homogeneous regions
+
+2. **Warm Container Pool with Pre-initialized Valheim State** (50-65% reduction → ~1-1.5 min sustained)
+   - Extend warm_container_manager to keep Valheim servers already running (not just installed)
+   - Send console command to load seed instead of full server restart (60-90s startup → 10-20s)
+   - **Implementation target:** `etl/experimental/warm-pooling/`
+
+3. **Parallel Chunk-Based Sampling** (70-80% reduction → ~45-60 sec)
+   - Split world into 4-9 spatial chunks, generate in parallel Docker containers
+   - Merge results after completion
+
+See historical analysis in `*_whitepaper.md` files for validation data supporting these strategies.
+
+### 8.2 Optimization Targets
 
 **World Generation:**
 - Target: < 5 minutes per seed

@@ -1,0 +1,7 @@
+# Warm Engine Pooling Requirements
+
+# Docker management
+docker>=6.1.0
+
+# Utilities
+python-dateutil>=2.8.0

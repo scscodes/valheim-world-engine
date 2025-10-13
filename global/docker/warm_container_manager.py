@@ -34,25 +34,14 @@ class WarmContainerManager:
         self.docker_client = docker_client or docker.from_env()
         self.logger = logging.getLogger(__name__)
         
-        # Warm container configurations
+        # Universal warm container configuration
+        # All ETL strategies share the same prerequisites: SteamCMD + Valheim + BepInEx
         self.configs = {
-            "valheim-bepinex": WarmContainerConfig(
-                base_image="vwe/valheim-bepinex:latest",
-                container_name_prefix="vwe-warm-bepinex",
-                max_warm_containers=2,
-                container_ttl_minutes=45
-            ),
-            "valheim-procedural": WarmContainerConfig(
-                base_image="vwe/valheim-procedural:latest", 
-                container_name_prefix="vwe-warm-procedural",
-                max_warm_containers=1,
-                container_ttl_minutes=30
-            ),
-            "worldgen-runner": WarmContainerConfig(
-                base_image="vwe/worldgen-runner:latest",
-                container_name_prefix="vwe-warm-runner",
-                max_warm_containers=3,
-                container_ttl_minutes=60
+            "universal-valheim": WarmContainerConfig(
+                base_image="vwe-bepinex-gen1:latest",  # Universal base with all prerequisites
+                container_name_prefix="vwe-warm-universal",
+                max_warm_containers=3,  # Multiple containers for parallel jobs
+                container_ttl_minutes=60  # Longer TTL since it's universal
             )
         }
         
@@ -63,6 +52,10 @@ class WarmContainerManager:
         
         # Container metadata
         self.container_metadata: Dict[str, Dict[str, Any]] = {}
+        
+        # Discover existing warm containers on initialization
+        for config_name in self.configs.keys():
+            self._discover_existing_containers(config_name)
     
     def create_warm_container(self, config_name: str, seed_hash: str = None) -> str:
         """Create a new warm container ready for instant deployment"""
@@ -130,6 +123,9 @@ class WarmContainerManager:
     
     def get_available_container(self, config_name: str) -> Optional[str]:
         """Get an available warm container for immediate use"""
+        # First, try to find existing warm containers that aren't tracked
+        self._discover_existing_containers(config_name)
+        
         if not self.warm_containers[config_name]:
             self.logger.info(f"No warm containers available for {config_name}, creating new one")
             return self.create_warm_container(config_name)
@@ -159,13 +155,39 @@ class WarmContainerManager:
             self.container_metadata[container_name]["last_used"] = datetime.utcnow().isoformat()
         
         return container_name
+
+    def _discover_existing_containers(self, config_name: str) -> None:
+        """Discover existing warm containers that aren't being tracked"""
+        try:
+            config = self.configs[config_name]
+            prefix = config.container_name_prefix
+            
+            # Find containers with the expected prefix
+            containers = self.docker_client.containers.list(
+                filters={"status": "running", "name": prefix}
+            )
+            
+            for container in containers:
+                if container.name not in self.warm_containers[config_name]:
+                    self.warm_containers[config_name].append(container.name)
+                    self.container_metadata[container.name] = {
+                        "config_name": config_name,
+                        "created_at": container.attrs['Created'],
+                        "last_used": container.attrs['Created'],
+                        "status": "ready"
+                    }
+                    self.logger.info(f"Discovered existing warm container: {container.name}")
+        except Exception as e:
+            self.logger.warning(f"Error discovering existing containers: {e}")
     
-    def clone_container_for_job(self, config_name: str, seed_hash: str, job_id: str) -> str:
-        """Clone a warm container for a specific job"""
+    def clone_container_for_job(self, config_name: str, seed_hash: str, job_id: str, 
+                                environment: Dict[str, str] = None, volumes: Dict[str, Dict] = None,
+                                seed_name: str = None) -> str:
+        """Clone a warm container for a specific job with custom environment and volumes"""
         warm_container_name = self.get_available_container(config_name)
         
         # Create job-specific container name
-        job_container_name = f"vwe-job-{job_id}-{seed_hash}"
+        job_container_name = f"vwe-job-{job_id}-{seed_hash[:12]}"
         
         self.logger.info(f"Cloning warm container {warm_container_name} to {job_container_name}")
         
@@ -173,13 +195,26 @@ class WarmContainerManager:
             # Get the warm container
             warm_container = self.docker_client.containers.get(warm_container_name)
             
+            # Prepare environment (merge with job-specific environment)
+            job_env = self._get_job_environment(config_name, seed_hash, job_id, seed_name)
+            if environment:
+                job_env.update(environment)
+            
+            # Prepare volumes (merge with job-specific volumes)
+            job_volumes = self._get_job_volumes(config_name, seed_hash)
+            if volumes:
+                # Avoid duplicate mount points
+                for mount_point, mount_config in volumes.items():
+                    if mount_config.get('bind') not in [v.get('bind') for v in job_volumes.values()]:
+                        job_volumes[mount_point] = mount_config
+            
             # Create new container from the same image with job-specific config
             job_container = self.docker_client.containers.create(
                 image=warm_container.image,
                 name=job_container_name,
                 detach=True,
-                environment=self._get_job_environment(config_name, seed_hash, job_id),
-                volumes=self._get_job_volumes(config_name, seed_hash),
+                environment=job_env,
+                volumes=job_volumes,
                 command=self._get_job_command(config_name, seed_hash),
                 labels={
                     "vwe.type": "job-container",
@@ -191,15 +226,42 @@ class WarmContainerManager:
                 }
             )
             
-            # Start the job container
-            job_container.start()
-            
-            self.logger.info(f"Job container started: {job_container_name}")
+            self.logger.info(f"Job container created: {job_container_name}")
             return job_container_name
             
         except Exception as e:
             self.logger.error(f"Failed to clone container for job {job_id}: {e}")
             raise
+
+    def get_warm_container_image(self, config_name: str) -> str:
+        """Get the image name of a warm container for direct use"""
+        warm_container_name = self.get_available_container(config_name)
+        warm_container = self.docker_client.containers.get(warm_container_name)
+        return warm_container.image.tags[0] if warm_container.image.tags else warm_container.image.id
+
+    def cleanup_job_container(self, job_container_name: str) -> None:
+        """Clean up a job container after completion"""
+        try:
+            container = self.docker_client.containers.get(job_container_name)
+            if container.status == "running":
+                container.stop(timeout=30)
+            container.remove(force=True)
+            self.logger.info(f"Cleaned up job container: {job_container_name}")
+        except Exception as e:
+            self.logger.warning(f"Failed to cleanup job container {job_container_name}: {e}")
+
+    def cleanup_all_job_containers(self) -> None:
+        """Clean up all job containers"""
+        try:
+            containers = self.docker_client.containers.list(
+                filters={"label": "vwe.type=job-container"},
+                all=True
+            )
+            for container in containers:
+                self.cleanup_job_container(container.name)
+            self.logger.info(f"Cleaned up {len(containers)} job containers")
+        except Exception as e:
+            self.logger.error(f"Failed to cleanup job containers: {e}")
     
     def _get_preload_environment(self, config_name: str) -> Dict[str, str]:
         """Get environment variables for preloading containers"""
@@ -209,14 +271,16 @@ class WarmContainerManager:
             "VWE_PRELOADED": "true"
         }
         
-        if config_name == "valheim-bepinex":
+        if config_name in ["valheim-bepinex", "universal-valheim"]:
             return {
                 **base_env,
                 "BEPINEX": "1",
                 "VWE_AUTOSAVE_ENABLED": "true",
                 "VWE_DATAEXPORT_ENABLED": "true",
                 "SERVER_PUBLIC": "0",
-                "UPDATE_ON_START": "0"  # Skip updates in warm containers
+                "UPDATE_ON_START": "0",  # Skip updates in warm containers
+                "WORLD_NAME": "Dedicated",
+                "SERVER_NAME": "VWE BepInEx Server"
             }
         elif config_name == "valheim-procedural":
             return {
@@ -245,40 +309,65 @@ class WarmContainerManager:
             str(temp_dir / "warm"): {"bind": "/config", "mode": "rw"}
         }
         
-        if config_name in ["valheim-bepinex", "valheim-procedural"]:
+        if config_name in ["valheim-bepinex", "universal-valheim", "valheim-procedural"]:
             # Mount plugin directories for preloading
-            volumes.update({
-                "/tmp/vwe-warm-plugins": {"bind": "/config/bepinex/plugins", "mode": "ro"}
-            })
+            plugin_source = Path("/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-gen1/plugins")
+            if plugin_source.exists():
+                volumes.update({
+                    str(plugin_source): {"bind": "/config/bepinex/plugins", "mode": "ro"}
+                })
+            else:
+                # Fallback to temp directory
+                volumes.update({
+                    "/tmp/vwe-warm-plugins": {"bind": "/config/bepinex/plugins", "mode": "ro"}
+                })
         
         return volumes
     
-    def _get_job_environment(self, config_name: str, seed_hash: str, job_id: str) -> Dict[str, str]:
+    def _get_job_environment(self, config_name: str, seed_hash: str, job_id: str, seed_name: str = None) -> Dict[str, str]:
         """Get environment variables for job containers"""
         base_env = self._get_preload_environment(config_name)
+        
+        # Use actual seed name if provided, otherwise use hash
+        world_name = seed_name if seed_name else seed_hash
+        world_seed = seed_name if seed_name else seed_hash
         
         # Override with job-specific values
         job_env = {
             **base_env,
             "VWE_WARM_CONTAINER": "false",
             "VWE_JOB_ID": job_id,
-            "WORLD_NAME": seed_hash,
-            "WORLD_SEED": seed_hash,  # Assuming seed_hash is the actual seed
-            "UPDATE_ON_START": "1"  # Enable updates for job containers
+            "WORLD_NAME": world_name,
+            "WORLD_SEED": world_seed,
+            "UPDATE_ON_START": "1",  # Enable updates for job containers
+            "BEPINEX": "1",  # Ensure BepInEx is enabled
+            "VWE_AUTOSAVE_ENABLED": "true",
+            "VWE_DATAEXPORT_ENABLED": "true",
+            "SERVER_PUBLIC": "0"
         }
         
         return job_env
     
     def _get_job_volumes(self, config_name: str, seed_hash: str) -> Dict[str, Dict[str, str]]:
         """Get volumes for job containers"""
-        data_dir = Path(f"/home/steve/projects/valheim-world-engine/data/seeds/{seed_hash}")
+        # Use the experimental bepinex-gen1 data directory to match orchestrator expectations
+        data_dir = Path(f"/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-gen1/data/seeds/{seed_hash}")
         data_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create worlds_local subdirectory for Valheim world files
+        worlds_local_dir = data_dir / "worlds_local"
+        worlds_local_dir.mkdir(parents=True, exist_ok=True)
         
         volumes = {
             str(data_dir): {"bind": "/config", "mode": "rw"}
         }
         
-        if config_name in ["valheim-bepinex", "valheim-procedural"]:
+        # For universal container, mount plugins from the experimental bepinex-gen1 directory
+        if config_name == "universal-valheim":
+            plugin_dir = Path("/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-gen1/plugins")
+            if plugin_dir.exists():
+                volumes[str(plugin_dir)] = {"bind": "/config/bepinex/plugins", "mode": "ro"}
+        elif config_name in ["valheim-bepinex", "valheim-procedural"]:
             # Mount actual plugin directories
             plugin_dir = Path("/home/steve/projects/valheim-world-engine/etl/stable/bepinex/plugins")
             if plugin_dir.exists():
@@ -288,7 +377,7 @@ class WarmContainerManager:
     
     def _get_job_command(self, config_name: str, seed_hash: str) -> List[str]:
         """Get command for job containers"""
-        if config_name in ["valheim-bepinex", "valheim-procedural"]:
+        if config_name in ["universal-valheim", "valheim-bepinex", "valheim-procedural"]:
             return ["valheim-server"]
         elif config_name == "worldgen-runner":
             return ["bash", "-c", "echo 'Worldgen runner ready' && sleep infinity"]
