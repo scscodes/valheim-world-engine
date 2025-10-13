@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = VWE_AutoSave
+build_property.ProjectDir = /home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 

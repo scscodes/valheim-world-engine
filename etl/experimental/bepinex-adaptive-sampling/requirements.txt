@@ -1,0 +1,10 @@
+# Python dependencies for BepInEx Adaptive Sampling validation
+
+# Docker management
+docker>=7.0.0
+
+# JSON parsing (built-in, listed for completeness)
+# json
+
+# Path handling (built-in)
+# pathlib

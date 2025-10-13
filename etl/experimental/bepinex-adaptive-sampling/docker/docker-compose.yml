@@ -1,0 +1,38 @@
+services:
+  adaptive-sampling:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: vwe-adaptive-sampling:latest
+    container_name: vwe-adaptive-sampling-test
+    user: "0:0"  # Start as root for file permissions
+    environment:
+      # Valheim Server Configuration
+      - SERVER_NAME=VWE Adaptive Sampling 256x256
+      - WORLD_NAME=${WORLD_NAME:-AdaptiveTest}
+      - SERVER_PASS=secret12345
+      - SERVER_PUBLIC=0
+      - SERVER_PORT=2456
+      - TZ=UTC
+
+      # File ownership
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+
+      # BepInEx configuration
+      - DOORSTOP_ENABLE=TRUE
+      - DOORSTOP_INVOKE_DLL_PATH=./BepInEx/core/BepInEx.Preloader.dll
+      - DOORSTOP_CORLIB_OVERRIDE_PATH=./unstripped_corlib
+    volumes:
+      # Mount experiment output directory (world files and exported data)
+      - ../output:/config
+    ports:
+      - "2456:2456/udp"
+      - "2457:2457/udp"
+      - "2458:2458/udp"
+    restart: "no"
+    stop_grace_period: 300s  # Allow 5 minutes for graceful export completion
+    labels:
+      - "com.valheimworldengine.experiment=adaptive-sampling"
+      - "com.valheimworldengine.resolution=256x256"
+      - "com.valheimworldengine.expected-time=34s"
