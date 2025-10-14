@@ -18,3 +18,13 @@
 /home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.sourcelink.json
 /home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.dll
 /home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.pdb
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/bin/Release/net48/VWE_AutoSave.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/bin/Release/net48/VWE_AutoSave.pdb
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.csproj.AssemblyReference.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.GeneratedMSBuildEditorConfig.editorconfig
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.AssemblyInfoInputs.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.AssemblyInfo.cs
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.csproj.CoreCompileInputs.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.sourcelink.json
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/Release/net48/VWE_AutoSave.pdb

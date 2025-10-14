@@ -80,9 +80,11 @@ RUN mkdir -p /opt/valheim/BepInEx/plugins \
 USER root
 COPY plugins/VWE_AutoSave.dll /opt/valheim/BepInEx/plugins/
 COPY plugins/VWE_DataExporter.dll /opt/valheim/BepInEx/plugins/
+COPY plugins/VWE_WorldScreenshot.dll /opt/valheim/BepInEx/plugins/
 COPY plugins/Newtonsoft.Json.dll /opt/valheim/BepInEx/plugins/
 COPY config/VWE_AutoSave.cfg /opt/valheim/BepInEx/config/com.valheimworldengine.autosave.cfg
 COPY config/VWE_DataExporter.cfg /opt/valheim/BepInEx/config/com.valheimworldengine.dataexporter.cfg
+COPY config/VWE_WorldScreenshot.cfg /opt/valheim/BepInEx/config/com.vwe.worldscreenshot.cfg
 RUN chown valheim:valheim /opt/valheim/BepInEx/plugins/*.dll && \
     chown valheim:valheim /opt/valheim/BepInEx/config/*.cfg
 

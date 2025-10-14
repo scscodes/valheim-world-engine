@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = VWE.WorldScreenshot
+build_property.ProjectDir = /home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 

@@ -21,3 +21,15 @@
 /home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.csproj.CopyComplete
 /home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.dll
 /home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.pdb
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/bin/Release/net48/VWE_DataExporter.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/bin/Release/net48/VWE_DataExporter.pdb
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/bin/Release/net48/Newtonsoft.Json.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.csproj.AssemblyReference.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.GeneratedMSBuildEditorConfig.editorconfig
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.AssemblyInfoInputs.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.AssemblyInfo.cs
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.csproj.CoreCompileInputs.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.sourcelink.json
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.csproj.CopyComplete
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/Release/net48/VWE_DataExporter.pdb

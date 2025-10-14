@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "fuKsumWrz4bowPOf0UgJEv/2X2duj+6JuGKjgCPZjQ1EBQ/q0UX/r3JAO//VJBDmBP8V8w5Ck6BrvJMET2MqcA==",
+  "dgSpecHash": "PaE5FKOVlLT3VvxJ1b8nyOEdhYwUqMC3SHVlDNaGYjk/ixvZGs495g9SiWGUK7Lc95TvdNt+7AdfUndNWb66YA==",
   "success": true,
-  "projectFilePath": "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/VWE_AutoSave.csproj",
+  "projectFilePath": "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/VWE_AutoSave.csproj",
   "expectedPackageFiles": [
     "/home/steve/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
     "/home/steve/.nuget/packages/microsoft.netframework.referenceassemblies.net48/1.0.3/microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512"

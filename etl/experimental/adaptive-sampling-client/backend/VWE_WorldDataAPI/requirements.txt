@@ -12,6 +12,7 @@ httpx==0.27.2
 # Data processing (Python 3.13 compatible)
 numpy==2.1.2
 pillow==11.0.0
+scipy==1.14.1  # For Voronoi interpolation and image processing
 
 # Testing
 pytest==8.3.3

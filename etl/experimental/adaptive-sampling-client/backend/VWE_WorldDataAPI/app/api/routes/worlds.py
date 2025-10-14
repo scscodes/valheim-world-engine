@@ -63,31 +63,85 @@ async def get_world_info(seed: str):
 @router.get("/{seed}/biomes", response_model=BiomeMapResponse)
 async def get_biome_data(
     seed: str,
-    format: Literal["json", "png"] = Query(default="json", description="Response format")
+    format: Literal["json", "png"] = Query(default="json", description="Response format"),
+    render_mode: Literal["nearest", "smooth"] = Query(
+        default="nearest",
+        description="Rendering mode: 'nearest' for fast/blocky, 'smooth' for interpolated boundaries"
+    ),
+    visualization_mode: Literal["terrain_only", "height_aware", "water_mask", "height_gradient"] = Query(
+        default="terrain_only",
+        description="Visualization mode: terrain_only (raw biomes), height_aware (apply water level), water_mask (debug), height_gradient (debug)"
+    ),
+    resolution: Optional[int] = Query(
+        default=None,
+        ge=256,
+        le=4096,
+        description="Target resolution for PNG output (e.g., 1024, 2048, 4096)"
+    ),
+    water_level: float = Query(
+        default=30.0,
+        ge=0.0,
+        le=100.0,
+        description="Water level threshold in meters (default 30m for Valheim)"
+    )
 ):
     """
-    Get biome data for a world seed
-    
+    Get biome data for a world seed with advanced rendering options
+
     - **seed**: World seed name
     - **format**: Response format (json or png)
+    - **render_mode**: Rendering mode (nearest=fast/blocky, smooth=interpolated)
+    - **visualization_mode**:
+        - terrain_only: Raw terrain biomes (ignores water)
+        - height_aware: Apply water level (Shallows for submerged areas) ⭐ RECOMMENDED
+        - water_mask: Debug view (Blue=shallows, Green=land, Red=ocean)
+        - height_gradient: Debug view (grayscale elevation)
+    - **resolution**: Target output resolution for PNG (256-4096)
+    - **water_level**: Water level in meters for height_aware mode (default 30m)
+
+    Examples:
+      - `/biomes?format=png&visualization_mode=height_aware` - Realistic water/land separation
+      - `/biomes?format=png&render_mode=smooth&resolution=2048&visualization_mode=height_aware` - Best quality
+      - `/biomes?format=png&visualization_mode=water_mask` - Debug water coverage
+      - `/biomes?format=png&visualization_mode=height_aware&water_level=25` - Tune water level
     """
     try:
         biome_data = world_loader.load_biome_data(seed)
-        
+
         if format == "png":
-            # Generate PNG image
-            image_buffer = image_generator.generate_biome_image(biome_data)
+            # Load heightmap if needed for height-aware modes
+            heightmap_data = None
+            if visualization_mode in ["height_aware", "water_mask", "height_gradient"]:
+                try:
+                    heightmap_data = world_loader.load_heightmap_data(seed)
+                except FileNotFoundError:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Heightmap data required for {visualization_mode} mode but not found for seed '{seed}'"
+                    )
+
+            # Generate PNG image with specified options
+            image_buffer = image_generator.generate_biome_image(
+                biome_data,
+                heightmap_data=heightmap_data,
+                target_resolution=resolution,
+                render_mode=render_mode,
+                visualization_mode=visualization_mode,
+                water_level=water_level
+            )
+
+            filename = f"biomes_{seed}_{render_mode}_{visualization_mode}.png"
             return StreamingResponse(
                 image_buffer,
                 media_type="image/png",
-                headers={"Content-Disposition": f"inline; filename=biomes_{seed}.png"}
+                headers={"Content-Disposition": f"inline; filename={filename}"}
             )
         else:
             # Return JSON
             return biome_data
-            
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Biome data for '{seed}' not found")
+
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

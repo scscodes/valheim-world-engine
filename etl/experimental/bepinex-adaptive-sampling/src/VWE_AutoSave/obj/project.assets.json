@@ -420,11 +420,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/VWE_AutoSave.csproj",
+      "projectUniqueName": "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/VWE_AutoSave.csproj",
       "projectName": "VWE_AutoSave",
-      "projectPath": "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/VWE_AutoSave.csproj",
+      "projectPath": "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/VWE_AutoSave.csproj",
       "packagesPath": "/home/steve/.nuget/packages/",
-      "outputPath": "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/",
+      "outputPath": "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_AutoSave/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/steve/.nuget/NuGet/NuGet.Config"

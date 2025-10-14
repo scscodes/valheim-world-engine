@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj": {}
+    "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj": {}
   },
   "projects": {
-    "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj": {
+    "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj",
+        "projectUniqueName": "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj",
         "projectName": "VWE_DataExporter",
-        "projectPath": "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj",
+        "projectPath": "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/VWE_DataExporter.csproj",
         "packagesPath": "/home/steve/.nuget/packages/",
-        "outputPath": "/home/steve/projects/valheim-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/",
+        "outputPath": "/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_DataExporter/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/steve/.nuget/NuGet/NuGet.Config"

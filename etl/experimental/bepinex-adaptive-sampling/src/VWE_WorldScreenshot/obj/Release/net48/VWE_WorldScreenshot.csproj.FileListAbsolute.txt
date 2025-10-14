@@ -1,0 +1,12 @@
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/bin/Release/net48/VWE_WorldScreenshot.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/bin/Release/net48/VWE_WorldScreenshot.pdb
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/bin/Release/net48/Newtonsoft.Json.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.csproj.AssemblyReference.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.GeneratedMSBuildEditorConfig.editorconfig
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.AssemblyInfoInputs.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.AssemblyInfo.cs
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.csproj.CoreCompileInputs.cache
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.sourcelink.json
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.csproj.CopyComplete
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.dll
+/home/steve/projects/valhem-world-engine/etl/experimental/bepinex-adaptive-sampling/src/VWE_WorldScreenshot/obj/Release/net48/VWE_WorldScreenshot.pdb

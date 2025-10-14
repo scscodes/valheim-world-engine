@@ -62,9 +62,9 @@ namespace VWE_DataExporter.DataExporters
                 {
                     try
                     {
-                        // FIX: Calculate world coordinates to cover full ±10km range
-                        var worldX = (x * stepSize) - worldRadius;
-                        var worldZ = (z * stepSize) - worldRadius;
+                        // FIX: Sample pixel centers (standard GIS practice) to reduce edge bias
+                        var worldX = ((x + 0.5f) * stepSize) - worldRadius;
+                        var worldZ = ((z + 0.5f) * stepSize) - worldRadius;
 
                         var biome = GetBiomeAtPosition(worldX, worldZ);
                         biomeMap[x, z] = (int)biome;
